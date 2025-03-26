@@ -1,0 +1,6 @@
+tmp/*
+romfs/*
+target/
+make_uboot_update_file/netall_XM650V200_CAR_X2V50_3.bin
+make_uboot_update_file/update.img
+usr/bin/car_demo

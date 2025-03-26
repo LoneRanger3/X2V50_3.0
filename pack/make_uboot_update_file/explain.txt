@@ -1,0 +1,22 @@
+制作uboot强制升级文件与SD卡升级文件的合并文件:默认在sample.sh当中执行生成到target目录，根据需求做参数更改
+    1、编译源文件生成可执行文件 gcc merge_file.c -o merge_file
+    2、通过可执行文件打包升级文件（文件顺序必须是：uboot升级文件、强烧过程中的提示显示图片这里以开机图片为例、SD卡升级文件）
+    3、将生成的输出的文件放入sd卡重启
+    注意：老程序第一次要先升级SD卡升级文件；将支持SD卡升级合并文件的功能升级上去
+实例：
+[wangzukun@Compile make_uboot_update_file]$ ./merge_file netall_XM650V200_CAR_X22B.bin ../target/update.img ../logo/320x1280.yuv ../target/netall_XM650V200_CAR_X22B.bin
+../target/update.img size:15466560  offset:64
+Merge srcfile ../target/update.img created successfully.
+
+../logo/320x1280.yuv size:614400  offset:15466624
+Merge srcfile ../logo/320x1280.yuv created successfully.
+
+../target/netall_XM650V200_CAR_X22B.bin size:11378553  offset:16081024
+Merge srcfile ../target/netall_XM650V200_CAR_X22B.bin created successfully.
+
+Master file update.img created successfully.
+Master file header:24 total head size:64
+ data size:27459513
+[wangzukun@Compile make_uboot_update_file]$ ls
+explain.txt  merge_file  merge_file.c  netall_XM650V200_CAR_X22B.bin
+[wangzukun@Compile make_uboot_update_file]$

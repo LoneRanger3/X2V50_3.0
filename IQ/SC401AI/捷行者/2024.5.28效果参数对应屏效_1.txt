@@ -1,0 +1,38 @@
+
+void Adjust_Screen_Effect()
+{
+       lcd_vo_param vo_param = {0};
+      //100
+       unsigned int  gama_value[65]={0, 3, 6, 10, 13, 17, 21, 24, 28, 32, 36, 40, 43, 47, 51, 55, 59, 63, 67, 71, 75, 79, 83, 87, 91, 95, 99, 103, 107, 111, 115, 119, 123, 127, 131, 135, 139, 143, 147, 151, 156, 160, 164, 168, 172, 176, 180, 184, 189, 193, 197, 201, 205, 209, 214, 218, 222, 226, 230, 234, 239, 243, 247, 251, 256};
+		vo_param.ygain = 110;//135;//125
+		vo_param.ugain = 120;//105;//130
+		vo_param.vgain = 120;//105;//130
+		vo_param.rgain = 105;
+		vo_param.ggain = 102;
+		vo_param.bgain = 105;
+		// XMLogI("ygain, %d %d %d %d %d %d", vo_param.ygain, vo_param.ugain, vo_param.vgain,
+		// 	vo_param.rgain, vo_param.ggain, vo_param.bgain);
+		vo_param.yoffs = -8;//-5
+		vo_param.uoffs = 0;
+		vo_param.voffs = 0;
+		vo_param.roffs = 0;
+		vo_param.goffs = 0;
+		vo_param.boffs = 0;
+		// XMLogI("yoffs, %d %d %d %d %d %d", vo_param.yoffs, vo_param.uoffs, vo_param.voffs,
+		// 	vo_param.roffs, vo_param.goffs, vo_param.boffs);
+		vo_param.rcoe[0] = 100;
+		vo_param.rcoe[1] = 0;
+		vo_param.rcoe[2] = 0;
+		vo_param.gcoe[0] = 0;
+		vo_param.gcoe[1] = 100;
+		vo_param.gcoe[2] = 0;
+		vo_param.bcoe[0] = 0;
+		vo_param.bcoe[1] = 0;
+		vo_param.bcoe[2] = 100;
+		
+		for (int i = 0; i < 65; i++) {
+				vo_param.gamma[i] = gama_value[i];
+			//	printf("%d ", vo_param.gamma[i]);
+		}
+	LIBCR_VO_SetParam(&vo_param);		
+}

@@ -17,8 +17,11 @@
 #define XM_MAX_CHANNEL_NUM 4
 #define XM_MAX_RECORD_NUM 1500	//一张sd卡上的某通道摄像头，最多允许1500个录像文件
 #define XM_MAX_WIFI_PASSWORD_LEN 23
-#define XM_MAX_OSD_WIDTH 320
-#define XM_MAX_OSD_HEIGHT 128
+#define XM_MAX_OSD_WIDTH 1024//320
+#define XM_MAX_OSD_HEIGHT 64//128
+
+#define OSD_SYMBOL_TEST 0 //水印测试开关
+#define XM_MAX_OSD_TIME_NUM 16 //开水印测试为68，不开为16 OSD_SYMBOL_TEST
 
 /*------------------------------enum-------------------------------*/	
 //SD卡号，最多支持两张SD卡
@@ -122,6 +125,7 @@ typedef enum _XMEventType
 	//喇叭使能
 	XM_EVENT_SPEAKER_ENABLE = 300,		
 	XM_EVENT_IN_VIDEO,
+	XM_EVENT_GPS_TIME,
 }XMEventType;
 
 typedef enum _XMRecordType
@@ -187,7 +191,8 @@ typedef enum
 	KEYMAP_LONG_UP,
 	KEYMAP_LONG_DOWN,
 	KEYMAP_PWR,
-	KEYMAP_MENU_LONG
+	KEYMAP_MENU_LONG,
+	KEYMAP_LONG_MODE
 }KEYMAP_E;
 
 typedef enum
@@ -451,6 +456,7 @@ typedef struct APP_PARAM_ITEMS
 	int parking_monitor;
 	int screen_standby;
 	int timelapse_rate;
+	int speaker;
 	int key_tone;
 	int park_record_time;
 	int ir_mode;

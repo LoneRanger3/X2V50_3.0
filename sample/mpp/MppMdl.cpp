@@ -62,10 +62,22 @@ const int kSamplePerFrame = 320;
 #if defined SUPPORT_4K
 const int kMaxPicWidth = 3840;
 const int kMaxPicHeight = 2144;
-const int kSubStreamWidth = 640;
-const int kSubStreamHeight = 480;
-const int kSubStreambit_rate = 768;
+
+#if 0
+const int kSubStreamWidth = 1280;//640;
+const int kSubStreamHeight =720; //480;
+const int kSubStreambit_rate = 1024;
+const int kSubStreamframe_rate = 20;//15 20
+
+#else
+const int kSubStreamWidth = 640;//640;
+const int kSubStreamHeight =480; //480;
+//const int kSubStreambit_rate = 768;
+const int kSubStreambit_rate = 2048;
 const int kSubStreamframe_rate = 15;
+
+#endif
+
 #elif defined SUPPORT_3K
 const int kMaxPicWidth = 3008;
 const int kMaxPicHeight = 1800;
@@ -584,16 +596,39 @@ int MppMdl::Init()
 
 	char pic_name[32];
 	int i;
-	for (i = 0; i < 13; i++) {
+	for (i = 0; i < XM_MAX_OSD_TIME_NUM; i++) {
 		memset(pic_name, 0, sizeof(pic_name));
+#if 1
+		if (i < 10)
+			sprintf(pic_name, "/mnt/custom/Pic/osd_str%d.rgb", i);
+		else if (i == 10)
+			sprintf(pic_name, "/mnt/custom/Pic/osdfh.rgb");
+		else if (i == 11)
+			sprintf(pic_name, "/mnt/custom/Pic/osdxg.rgb");	
+#else
 		if (i < 10)
 			sprintf(pic_name, "/mnt/custom/Pic/num_%d.rgb", i);
 		else if (i == 10)
 			sprintf(pic_name, "/mnt/custom/Pic/maohao.rgb");
 		else if (i == 11)
 			sprintf(pic_name, "/mnt/custom/Pic/fenge.rgb");	
+#endif
 		else if (i == 12)
 			sprintf(pic_name, "/mnt/custom/Pic/kongge.rgb");		
+		else if (i == 13)
+			sprintf(pic_name, "/mnt/custom/Pic/char_A.rgb");	
+		else if (i == 14)
+			sprintf(pic_name, "/mnt/custom/Pic/char_P.rgb");	
+		else if (i == 15)
+			sprintf(pic_name, "/mnt/custom/Pic/char_M.rgb");
+
+        #if OSD_SYMBOL_TEST
+		else if (i > 15 && i <= 41)
+     		sprintf(pic_name, "/mnt/custom/Pic/osd_str_%c.rgb", 'a'+(i - 16));
+		else if (i > 41 && i <= 67)
+     		sprintf(pic_name, "/mnt/custom/Pic/osd_str%c.rgb", 'A'+(i - 42));
+		#endif
+		
 		FILE* fp = fopen(pic_name, "rb");
 		if (!fp) {
 			XMLogE("Set osd, read rgb failed");
@@ -1203,6 +1238,7 @@ int MppMdl::GetPicJPEG(int channel)
 	return XM_SUCCESS;
 }
 
+#include "global_page.h"
 int MppMdl::EnableOsdTime(int channel, bool enable, int x, int y)
 {
 	//channel 4表示app子码流预览
@@ -1222,7 +1258,18 @@ int MppMdl::EnableOsdTime(int channel, bool enable, int x, int y)
 		   CloseOSD(channel, channel);			
 		   enable_osd_[channel] = false;		
 		  }
-		osd_time_x_[channel] = x;
+		 #if AIPAIPAI_PROJECT_ARABIC
+		 if(GlobalPage::Instance()->page_main()->language_value_ == Arabic && (channel == 4 || channel == 1)){
+			 
+			 osd_time_x_[channel] = x + OSD_TIME_OFS_X;  //阿拉伯语水印右移
+		 }else{
+		 
+			 osd_time_x_[channel] = x;
+		 }
+		 #else
+		 	 osd_time_x_[channel] = x;
+		 #endif
+		 
 		osd_time_y_[channel] = y;
 		OsdTitleCreate(channel, channel, kOSDWidth*20, kOSDHeight);
 	}
@@ -1256,6 +1303,7 @@ int MppMdl::SetOSDInfos(XM_MW_OSD_INFOS& osd_infos)
 			if (osd_infos.osd[i][j].enable) {
 				int width = osd_infos.osd[i][j].width;
 				int height = osd_infos.osd[i][j].height;
+			#if 0	
 				if (width > XM_MAX_OSD_WIDTH) {
 					user_osd_.osd[i][j].width = XM_MAX_OSD_WIDTH;
 					width = XM_MAX_OSD_WIDTH;
@@ -1264,6 +1312,14 @@ int MppMdl::SetOSDInfos(XM_MW_OSD_INFOS& osd_infos)
 					user_osd_.osd[i][j].height = XM_MAX_OSD_HEIGHT;
 					height = XM_MAX_OSD_HEIGHT;
 				}
+			#else
+				if (width*height > XM_MAX_OSD_WIDTH*XM_MAX_OSD_HEIGHT) {
+					user_osd_.osd[i][j].width = XM_MAX_OSD_WIDTH;
+					width = XM_MAX_OSD_WIDTH;
+					user_osd_.osd[i][j].height = XM_MAX_OSD_HEIGHT;
+					height = XM_MAX_OSD_HEIGHT;
+				}
+			#endif
 				OsdTitleCreate(handle, channel, width, height);
 				SetUserOsd(handle, channel, user_osd_.osd[i][j], j==1);
 			}
@@ -1356,6 +1412,16 @@ int MppMdl::SetUserOsd(RGN_HANDLE Handle, int nChannel, XM_MW_OSD_INFO& osd_info
 	pstRegion->unAttr.stOverlay.stRect.s32X = (osd_info.x*width/8192)/16*16;
 	pstRegion->unAttr.stOverlay.stRect.s32Y = (osd_info.y*height/8192)/16*16;
 
+#if 1
+    #if 1//X2V60_S_DEBUG1
+	int reserved_h = height >= 1800 ? 80 : 40;
+    #else
+	int reserved_h = height >= 1800 ? 128 : 64;
+    #endif
+	if (pstRegion->unAttr.stOverlay.stRect.s32Y > height-reserved_h) 
+		pstRegion->unAttr.stOverlay.stRect.s32Y = (height-reserved_h)/16*16;
+#endif
+
 	pstRegion->unAttr.stOverlay.stRect.u32Height = osd_info.height;
 	pstRegion->unAttr.stOverlay.stRect.u32Width = osd_info.width;
  
@@ -1387,7 +1453,11 @@ int MppMdl::SetOsdTitle(RGN_HANDLE Handle, int nChannel, const SystemTime& sys_t
 	int osd_width = sub ? (kOSDWidth/2) : kOSDWidth;
 	int osd_height = sub ? (kOSDHeight/2) : kOSDHeight;
 	int iRet = 0;
+	#if OSD_SYMBOL_TEST
+	int num_count = 17;
+	#else
 	int num_count = 19;
+	#endif
 	XM_MW_Media_Info media_info;
 	MPP_CHN_S pstChn;
 	pstChn.enModId = XM_ID_VENC;
@@ -1427,21 +1497,55 @@ int MppMdl::SetOsdTitle(RGN_HANDLE Handle, int nChannel, const SystemTime& sys_t
 		return XM_FAILURE;
 	}
 
+#if OSD_SYMBOL_TEST
+	static int count_year=0,count_month=16,count_sec=42;
+	if(nChannel == 4){
+		count_month++;
+		count_sec++;
+		count_year++;
+	
+		if(count_year > 4096){
+			
+			count_year=0;
+		}
+	
+		if(count_month > 41){
+			
+			count_month=16;
+		}
+	
+		if(count_sec > 67){
+			
+			count_sec=42;
+		}
+	}
+#endif
+
 	int i;
 	int pos = 0;
 	char str_date[32] = {0};
 	//年
+#if OSD_SYMBOL_TEST
+    sprintf(str_date, "%04d", count_year);
+#else
 	sprintf(str_date, "%04d", sys_time.year);
+#endif
+
 	for (i = 0; i < 4; i++) {
 		OSDSetNum(osd_show_buf_, str_date[i]-'0', pos++, num_count, sub);
 	}
 	OSDSetNum(osd_show_buf_, 11, pos++, num_count, sub);//fenge
 	//月
+	#if OSD_SYMBOL_TEST
+	OSDSetNum(osd_show_buf_, count_sec, pos++, num_count, sub);
+	#else
 	memset(str_date, 0, sizeof(str_date));
 	sprintf(str_date, "%02d", sys_time.month);
 	for (i = 0; i < 2; i++) {
 		OSDSetNum(osd_show_buf_, str_date[i]-'0', pos++, num_count, sub);
 	}
+	#endif
+	
 	OSDSetNum(osd_show_buf_, 11, pos++, num_count, sub);//fenge
 	//日
 	memset(str_date, 0, sizeof(str_date));
@@ -1465,11 +1569,15 @@ int MppMdl::SetOsdTitle(RGN_HANDLE Handle, int nChannel, const SystemTime& sys_t
 	}
 	OSDSetNum(osd_show_buf_, 10, pos++, num_count, sub);//maohao
 	//秒
+    #if OSD_SYMBOL_TEST
+	OSDSetNum(osd_show_buf_, count_month, pos++, num_count, sub);
+	#else
 	memset(str_date, 0, sizeof(str_date));
 	sprintf(str_date, "%02d", sys_time.sec);
 	for (i = 0; i < 2; i++) {
 		OSDSetNum(osd_show_buf_, str_date[i]-'0', pos++, num_count, sub);
 	}
+	#endif
 
 	BITMAP_S pstBitmap;
 	pstBitmap.u32Size = osd_width*osd_height*2*num_count;
@@ -1942,6 +2050,140 @@ int MppMdl::StopSoftVOProc()
 }
 
 #define MID(a, b, c)    MIN(MAX((a), MIN((b), (c))), MAX((b), (c)))
+int Anti_Aliasing_downscale2(int s_w, int s_h, int d_w, int d_h, unsigned char *s_y_addr, unsigned char *d_y_addr, int h_pos, int mirror)
+{
+	// int s_w, s_h;
+	// int d_w, d_h;
+	unsigned char *s_uv_addr = NULL,  *d_uv_addr = NULL;
+	unsigned int s_phy_addr = 0, d_phy_addr = 0;
+	unsigned int x, y, xrate = 0, yrate = 0;
+    int xerror = 0, yerror = 0;
+	int phi_x = 0, phi_y = 0;
+	unsigned int i = 0, j = 0, n = 0, m = 0;
+	uint8_t* ptr_y;
+	uint8_t* ptr_uv;
+	unsigned int y_sw =  0;
+	// s_w = 1920;
+	// s_h = 1080;
+	// d_w = 640;
+	// d_h = 320;
+	int pos = 0;
+	int d_h_realy = d_h;
+	phi_y = 0;
+	xrate = ((s_w << 16) / d_w);
+	yrate = ((s_h << 16) / d_h_realy);
+	xerror = -(1 << (16 - 1)) + (xrate >> 1);
+	for(i = 0; i < d_h_realy; i++)
+	{
+		phi_x = xerror;
+		phi_y = i * yrate;
+		y = MID(phi_y >> 16, 0, s_h - 2);
+		
+		if (mirror) {
+			ptr_y = d_y_addr + i;
+		}
+		else
+			ptr_y = d_y_addr + i + (d_w - 1) * d_h;
+			
+		//y_sw =  y * s_w;
+		for(j = 0; j < d_w; j++)
+		{
+			x = MID(phi_x >> 16, 0, s_w - 2);
+			//*ptr_y = *(s_y_addr + (y_sw + x));
+
+			int yy = 0;
+			//(c*4 + 2*d*2 + 2*b*2 + 4*a*1)/16;
+			uint8_t* c = s_y_addr + (y * s_w + x);
+			int i_c = *c;
+			yy = i_c << 2;
+
+			//d1、b1、a3
+			uint8_t* d1 = c + s_w;
+			uint8_t* a3 = d1 + 1;
+			uint8_t* b1 = c + 1;
+			yy += ((*d1) << 1);
+			yy += (*a3);
+			yy += ((*b1) << 1);
+
+			//a0、d0、a1
+			if (y > 0) {
+				uint8_t* d0 = c - s_w;
+				yy += ((*d0) << 1);
+				uint8_t* a1 = d0 + 1;
+				yy += (*a1);
+				if (x > 0) {
+					uint8_t* a0 = d0 - 1;
+					yy += (*a0);
+				}
+				else {
+					yy += (*d0);
+				}
+			}
+			else {
+				yy += (i_c << 2); //
+			}
+
+			//b0、a2
+			if (x > 0) {
+				uint8_t* b0 = c - 1;
+				yy += ((*b0) * 2);
+				uint8_t* a2 = d1 - 1;
+				yy += (*a2);
+			}
+			else {
+				yy += (i_c*3);
+			}
+
+			int value = yy >> 4;
+			*ptr_y = (value > 255) ? 255: value;
+
+			if (mirror) {
+				ptr_y += d_h;
+			}
+			else {
+				ptr_y -= d_h;
+			}
+			phi_x = phi_x + xrate;
+		}
+	}
+
+	d_uv_addr = d_y_addr + d_w * d_h;
+	s_uv_addr = s_y_addr + s_w * s_h;
+	unsigned int d_w_d_h_realy =  0;
+	unsigned int d_w_2 =  d_w / 2;
+	unsigned int d_h_realy_2 = d_h_realy / 2;
+	if (mirror){
+		d_w_d_h_realy =  (d_w_2 - 1) * d_h;
+	}
+
+	for(i = 0; i < d_h_realy_2; i++)
+	{
+		if (mirror)
+			ptr_uv = d_uv_addr + 2 * i;
+		else
+			ptr_uv = d_uv_addr + 2 * i + (d_w / 2 - 1) * d_h;
+			
+		y = MID(i * yrate >> 16, 0, (s_h >> 1) - 1);
+		y_sw =  y * s_w;
+		for(j = 0; j < d_w_2; j++)
+		{
+			x = MID((j * xrate) >> 15, 0, s_w - 2);
+			x = (x >> 1) << 1;
+			ptr_uv[0] = *(s_uv_addr + y_sw + x);
+			ptr_uv[1] = *(s_uv_addr + y_sw + x + 1);
+
+			if (mirror) {
+				ptr_uv += d_h;
+			}
+			else {
+				ptr_uv -= d_h;
+			}
+		}
+	}
+	
+	return 0;
+}
+
 #if !DISP_ROTATE_180 //不旋转
 int video_downscale(VIDEO_FRAME_INFO_S *src_frame, VIDEO_FRAME_INFO_S *dst_frame, bool mirror)
 {
@@ -2030,6 +2272,8 @@ int video_downscale(VIDEO_FRAME_INFO_S *src_frame, VIDEO_FRAME_INFO_S *dst_frame
 			}
 		}
 	}
+
+	Anti_Aliasing_downscale(s_w, s_h, d_w, d_h, s_y_addr, d_y_addr, 0, !mirror);
 
 	XM_MPI_SYS_MmzFlushCache(d_phy_addr, d_y_addr, d_w * d_h * 3 / 2);
 	XM_MPI_SYS_Munmap(s_y_addr, s_w * s_h * 3 / 2);
@@ -2125,6 +2369,8 @@ int video_downscale(VIDEO_FRAME_INFO_S *src_frame, VIDEO_FRAME_INFO_S *dst_frame
 			}
 		}
 	}
+
+	Anti_Aliasing_downscale2(s_w, s_h, d_w, d_h, s_y_addr, d_y_addr, 0, mirror);
 
 	XM_MPI_SYS_MmzFlushCache(d_phy_addr, d_y_addr, d_w * d_h * 3 / 2);
 	XM_MPI_SYS_Munmap(s_y_addr, s_w * s_h * 3 / 2);

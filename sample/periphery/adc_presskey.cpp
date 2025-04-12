@@ -96,14 +96,17 @@ void PressKeyChannelSelect(int channel) {
 					  }		
 					}
 					else if (last_value == KEY_MENU) {
+					  if(last_value_occur_times<30){
 						Key_Value[inindex] = KEYMAP_MENU;
 						XMLogI("key value=MENU");
 						if (inindex < 15)
 							inindex++;
 						else
 							inindex = 0;
+					  }
 					}
 					else if (last_value == KEY_MODE) {
+					  if(last_value_occur_times<30){
 						Key_Value[inindex] = KEYMAP_MODE;
 						XMLogI("key value=MODE");
 						if (inindex < 15)
@@ -111,6 +114,7 @@ void PressKeyChannelSelect(int channel) {
 						else
 							inindex = 0;
 					}
+				 }
 				}
 			}
 			last_value_occur_times = 0;
@@ -124,6 +128,10 @@ void PressKeyChannelSelect(int channel) {
 				 Key_Value[inindex] = KEYMAP_LONG_UP;
 				else if(last_value == KEY_DOWN)
 				 Key_Value[inindex] = KEYMAP_LONG_DOWN; 
+				else if(last_value == KEY_MENU)
+				 Key_Value[inindex] = KEYMAP_MENU_LONG; 
+				else if(last_value == KEY_MODE)
+				 Key_Value[inindex] = KEYMAP_LONG_MODE; 
 
 				if (inindex < 15)
 					inindex++;

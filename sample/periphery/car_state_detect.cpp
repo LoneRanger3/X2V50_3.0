@@ -254,7 +254,7 @@ int SensitivityDegreeSet(int degree) {
 	case 1:InitSensorHighSensitivity(); break;
 	case 2:InitSensorMediumSensitivity(); break;
 	case 3:InitSensorLowSensitivity(); break;
-	case 4: CarStopSensorMediumSensitivity(); break;
+	case 4: CarStopSensorHighSensitivity(); break;
 	default:XMLogE("Set gsensor level error");
 		break;
 	}

@@ -23,7 +23,7 @@ extern int g_sd_status;
 extern int g_tcp_connId;
 
 extern bool XM_Middleware_Mpp_ADLoss();
-extern int XM_Middleware_Sound_SetVolume(int volume);
+
 
 HTTPSerMdl* HTTPSerMdl::instance_ = 0;
 HTTPSerMdl* HTTPSerMdl::Instance()
@@ -95,6 +95,7 @@ void HTTPSerMdl::CfgInit(APP_PARAM_ITEMS_S* param_items)
     timelapse_rate_ = param_items->timelapse_rate;
     version_ = param_items->version;
     key_tone_ = param_items->key_tone;
+    speaker_=param_items->speaker;
     park_record_time_ = param_items->park_record_time;
 
     CreateThreadEx(check_thread_, (LPTHREAD_START_ROUTINE)CheckHttpUnitsFunc, this);
@@ -584,12 +585,16 @@ void HTTPSerMdl::lockVideo(int engineId, int connId, char * connType)
     g_engineId = engineId;
     g_connId = connId;
 }
-
+#include "../GUI/set_config.h"
 void HTTPSerMdl::capAbility(int engineId, int connId, char * connType)
 {
     cJSON* root_res = cJSON_CreateObject();
     cJSON* info = cJSON_CreateObject();
+    #if GPS_EN
+    cJSON_AddStringToObject(info, "value", "201001");
+    #else
     cJSON_AddStringToObject(info, "value", "001001");
+    #endif
     cJSON_AddNumberToObject(root_res, "result", 0);
     cJSON_AddItemToObject(root_res, "info", info);
     char* http_body = cJSON_Print(root_res);
@@ -618,7 +623,8 @@ void HTTPSerMdl::getFileList(int engineId, int connId, char * msg, char * connTy
     if (!record_stop) {
          XMLogW("record not stoped");
     }
- #endif 
+ #endif
+ 
     char* pbegin = strstr(msg, "?");
     if (pbegin == NULL) {
         cJSON* info = cJSON_CreateArray();
@@ -891,6 +897,7 @@ void HTTPSerMdl::getParamValue(int engineId, int connId, char* msg, char * connT
         packParamValueInfo("parking_monitor", parking_monitor_, info);
         packParamValueInfo("timelapse_rate", timelapse_rate_, info);
         packParamValueInfo("key_tone", key_tone_, info);
+       // packParamValueInfo("speaker", speaker_, info);
         packParamValueInfo("park_record_time", park_record_time_, info);
         cJSON_AddItemToObject(root_res, "info", info);
     } else if (strcmp(param, "rec") == 0) {
@@ -1097,8 +1104,9 @@ void HTTPSerMdl::setParamValue(int engineId, int connId, char* msg, char * connT
                 speaker_ = 2;
             } else {
                 XM_Middleware_Sound_SetVolume(100);
-                speaker_ = 4;
+                speaker_ = 3;
             }
+            XM_Middleware_Periphery_Notify(XM_EVENT_KEYTONE_ENABLE, "", speaker_);
         }
         else if (strcmp(param.c_str(), "voice_control") == 0) {
             if (strstr(value.c_str(), "1") != NULL) {

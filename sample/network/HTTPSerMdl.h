@@ -3,7 +3,7 @@
 #include "xm_middleware_api.h"
 #include "HttpUnit.h"
 #include "cJSON.h"
-
+extern int XM_Middleware_Sound_SetVolume(int volume);
 class HTTPSerMdl
 {
 public:

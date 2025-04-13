@@ -151,6 +151,9 @@ void PagePlayback::CreatePage()
 	else {
 		lv_obj_set_style_bg_opa(playback_page_, 0, 0);
 	}
+#if 1
+    GlobalPage::Instance()->page_set()->Createfunction_bar(playback_page_,23,0,true,true);
+#endif
 }
 
 void PagePlayback::BtnEvent(lv_event_t* e)
@@ -254,6 +257,9 @@ void PagePlayback::OpenSetPage()
 
      SelectFileStyle(menu_list_, screen_width, size_h(298));
 	lv_group_focus_next(GlobalData::Instance()->group);
+#if 1
+	GlobalPage::Instance()->page_set()->Createfunction_bar(video_set_page_,35,7,true,false);
+#endif
 }
 
 void PagePlayback::DelSetPageEvent(lv_event_t* e)
@@ -982,6 +988,9 @@ void PagePlayback::OpenSelectFilePage()
         lv_obj_align(label, LV_ALIGN_TOP_LEFT, size_h(20), size_h(3));
 	}
     SelectFileStyle(filetype_list_, screen_width, size_h(298));
+#if 1
+    GlobalPage::Instance()->page_set()->Createfunction_bar(select_filetype_page_,36,7,true,false);
+#endif
 }
 
 void PagePlayback::DelSelectFilePageEvent(lv_event_t* e)

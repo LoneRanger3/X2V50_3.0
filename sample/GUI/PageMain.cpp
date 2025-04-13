@@ -14,7 +14,7 @@
 #include "PageSet.h"
 #include "osd_user.h"
 #include "periphery/PeripheryThread.h"
-
+#include "gps.h"
 LV_FONT_DECLARE(lv_font_montserrat_30);
 extern int g_sd_status;
 extern int g_engineId;
@@ -30,7 +30,7 @@ PageMain::PageMain():pre_date_(0), record_time_label_(NULL), record_timer_(NULL)
 	pre_time_(0), pre_record_time_(0), update_time_(true), pre_camera_status_(XM_PLAY_SENSOR), collision_startup_(false),
 	reverse_line_img_(NULL), lock_current_recording_file_(false), car_charger_(true), battery_powered_(true),
 	led_on_(true), battery_img_(NULL), connect_computer_(false), check_battery_(true), battery_level_(221), pre_sys_time_(0),
-	wifi_enable_(false), wifi_id_label_(NULL), wifi_prepared_(false), app_disconnect_timer_(NULL),touch_plan(false),wifi_tip_win_(NULL)
+	wifi_enable_(false), wifi_id_label_(NULL), wifi_prepared_(false), app_disconnect_timer_(NULL),touch_plan(false),wifi_tip_win_(NULL), Function_bar_flag(true)
 {
 
 }
@@ -45,6 +45,9 @@ void PageMain::OpenPage()
 	CreatePage();
 }
 
+#include "cr_sdio.h"
+extern char* kAudioPath;
+extern char* kAudioPathLan;
 void PageMain::CreatePage()
 {
 	main_page_ = lv_create_page(lv_scr_act(), screen_width, screen_height, lv_color_black(), 0, 0,
@@ -225,6 +228,65 @@ void PageMain::CreatePage()
 	lv_obj_set_ext_click_area(wifi_img_, 20);
 	//lv_obj_add_flag(wifi_img_, LV_OBJ_FLAG_HIDDEN);
 
+    Function_bar(false);
+
+#if !X2V50_2_PRODUCT_TEST
+    cfg_value.int_value = 0;
+    GlobalData::Instance()->car_config()->GetValue(CFG_Operation_WiFi, cfg_value);
+    if(cfg_value.int_value ==1){
+		
+        cfg_value.int_value = 0;
+        GlobalData::Instance()->car_config()->SetValue(CFG_Operation_WiFi, cfg_value);
+    }
+#endif
+
+#if 1//
+	//卡修复
+	int tep = 0;
+	XM_CONFIG_VALUE get_cfg_value;
+	tep = GlobalData::Instance()->car_config()->GetValue(CFG_Operation_NEED_REPAIR_SDCARD, get_cfg_value);
+	XMLogI("[repair sd card] 1 tep: %d , %d \r\n", tep, get_cfg_value.bool_value);
+	
+	if(tep < 0){
+		
+		tep = GlobalData::Instance()->car_config()->GetValue(CFG_Operation_NEED_REPAIR_SDCARD, get_cfg_value);
+	}
+	
+	XMLogI("[repair sd card] 2 tep: %d , %d \r\n", tep, get_cfg_value.bool_value);
+	if(tep >= 0 && get_cfg_value.bool_value) 
+	{
+#if 1
+		XMLogW("sdio_status = %d \r\n", LIBCR_SDIO1_Status());
+		if(LIBCR_SDIO1_Status()){
+			XM_Middleware_WDT_WatchDogStop();
+			XMLogW("before fsck sdcard");
+			const char* kDevNode1 = "/dev/mmcblk0p1";
+			const char* kDevNode2 = "/dev/mmcblk0";
+			bool find_dev_node1 = access(kDevNode1, F_OK) == 0 ? true : false;
+			const char* sdcard_dev_node = find_dev_node1 ? kDevNode1 : kDevNode2;
+			char str_cmd[64] = {0};
+			sprintf(str_cmd, "fsck.fat -V -a -w %s", sdcard_dev_node);
+			system(str_cmd);
+			XM_Middleware_WDT_WatchDogStart(6);
+		}
+#endif
+		XMLogW("after fsck sdcard");
+		get_cfg_value.bool_value = false;
+		GlobalData::Instance()->car_config()->SetValue(CFG_Operation_NEED_REPAIR_SDCARD, get_cfg_value);
+	}
+#endif
+
+	cfg_value.int_value = English;
+	GlobalData::Instance()->car_config()->GetValue(CFG_Operation_Language, cfg_value);
+	GlobalPage::Instance()->page_main()->language_value_ = cfg_value.int_value;
+    if(GlobalPage::Instance()->page_main()->language_value_ == Russian){
+		
+		kAudioPathLan = "/mnt/custom/Audio/russian/";
+	}else{
+	
+    	kAudioPathLan = "/mnt/custom/Audio/english/";
+	}
+	//Voice_prompts("Please fasten your seat belt.pcm");
 	//录像界面水印
 	// x2_logo_img_ = lv_img_create(main_page_);
 	// lv_img_set_src(x2_logo_img_, image_path"Safe_cam.png");
@@ -236,6 +298,9 @@ void PageMain::CreatePage()
 	//RecordOnStartup();
 	//时间定时器
 	lv_timer_t* time_timer = lv_timer_create(UpdateTime, 100, NULL);
+ #if GPS_EN
+	gps_create_ui(1);
+  #endif
 }
 
 void PageMain::RecordOnStartup()
@@ -247,7 +312,11 @@ void PageMain::RecordOnStartup()
 				lv_obj_clear_flag(lock_png_, LV_OBJ_FLAG_HIDDEN);
 				XM_Middleware_Storage_CollisionRecord(-1);
 				lock_current_recording_file_ = true;
-				Voice_prompts("Video locked_16k.pcm");
+				if(GlobalPage::Instance()->page_main()->language_value_ != Russian){
+					
+				    Voice_prompts("Video locked_16k.pcm");
+				}
+				
 				StartRecord();
 				RED_ON;
 				if (record_label_) {
@@ -265,6 +334,105 @@ void PageMain::RecordOnStartup()
 		}
 	}
 }
+
+#define LOCK_IMG_OFS_X   5
+void PageMain::Function_bar(bool flag)
+{
+    static bool init_flag = true;
+    XM_CONFIG_VALUE cfg_value;
+    if (init_flag) {
+         init_flag = false;
+    
+         Function_page_ = lv_create_page(main_page_, screen_width, 32, lv_color_black(), 0, 0,
+                lv_font_all, lv_color_white(), 0);
+        // lv_obj_set_style_bg_opa(Function_page_, 0, 0);
+         lv_obj_set_pos(Function_page_, 0, 208);
+
+         lv_obj_t* power_img_= lv_img_create(Function_page_);
+         lv_img_set_src(power_img_, image_path"power.png");
+         lv_obj_align(power_img_, LV_ALIGN_BOTTOM_LEFT, size_w(0), size_h(0));
+
+         lv_obj_t* slash_img1_ = lv_img_create(Function_page_);
+         lv_img_set_src(slash_img1_, image_path"slash.png");
+         lv_obj_align_to(slash_img1_, power_img_, LV_ALIGN_OUT_RIGHT_MID, -size_w(6), size_h(0));
+
+         record_img_ = lv_img_create(Function_page_);
+         lv_img_set_src(record_img_, image_path"rec_off.png");
+         lv_obj_align_to(record_img_, slash_img1_, LV_ALIGN_OUT_RIGHT_MID, -size_w(3), 0);
+
+         set_img_ = lv_img_create(Function_page_);
+         lv_img_set_src(set_img_, image_path"menu.png");
+         lv_obj_align_to(set_img_, record_img_, LV_ALIGN_OUT_RIGHT_MID, size_w(6), 0);
+
+         lv_obj_t* slash_img2_ = lv_img_create(Function_page_);
+         lv_img_set_src(slash_img2_, image_path"slash.png");
+         lv_obj_align_to(slash_img2_, set_img_, LV_ALIGN_OUT_RIGHT_MID, -size_w(6), size_h(0));
+
+        photo_img_ = lv_img_create(Function_page_);
+        lv_img_set_src(photo_img_, image_path"photo_on.png");
+        lv_obj_align_to(photo_img_, slash_img2_, LV_ALIGN_OUT_RIGHT_MID, -size_w(4), 0);
+
+        lock_img_ = lv_img_create(Function_page_);
+        lv_img_set_src(lock_img_, image_path"lock_off.png");
+        lv_obj_align_to(lock_img_, photo_img_, LV_ALIGN_OUT_RIGHT_MID, size_w((32+LOCK_IMG_OFS_X)), 0);
+
+        lv_obj_t* switch_img_ = lv_img_create(Function_page_);
+        lv_img_set_src(switch_img_, image_path"switch.png");
+        lv_obj_align_to(switch_img_, lock_img_, LV_ALIGN_OUT_RIGHT_MID, size_w((40-LOCK_IMG_OFS_X)), size_h(0));
+
+        lv_obj_t* slash_img3_ = lv_img_create(Function_page_);
+        lv_img_set_src(slash_img3_, image_path"slash.png");
+        lv_obj_align_to(slash_img3_, switch_img_, LV_ALIGN_OUT_RIGHT_MID, -size_w(4), size_h(0));
+
+        silent_record_img_ = lv_img_create(Function_page_);
+        cfg_value.bool_value = false;
+        GlobalData::Instance()->car_config()->GetValue(CFG_Operation_Record_Voice, cfg_value);
+        if (cfg_value.bool_value) {
+            lv_img_set_src(silent_record_img_, image_path"mic_on.png");
+        }
+        else {
+            lv_img_set_src(silent_record_img_, image_path"mic_off.png");
+        }
+        lv_obj_align_to(silent_record_img_, slash_img3_, LV_ALIGN_OUT_RIGHT_MID, -size_w(4), size_h(0));
+
+#if 1
+        lv_obj_t* bar_wifi_img_ = lv_img_create(Function_page_);
+        lv_img_set_src(bar_wifi_img_, image_path"0wifi.png");
+        lv_obj_align_to(bar_wifi_img_, silent_record_img_, LV_ALIGN_OUT_RIGHT_MID, size_w(10), -size_h(2));
+        
+        lv_obj_t* slash_img4_ = lv_img_create(Function_page_);
+        lv_img_set_src(slash_img4_, image_path"slash.png");
+        lv_obj_align_to(slash_img4_, bar_wifi_img_, LV_ALIGN_OUT_RIGHT_MID, -size_w(4), size_h(0));
+        
+        playback_img_ = lv_img_create(Function_page_);
+        lv_img_set_src(playback_img_, image_path"playback_on.png");
+        lv_obj_align_to(playback_img_, slash_img4_, LV_ALIGN_OUT_RIGHT_MID, -size_w(4), size_h(1));
+#else
+        playback_img_ = lv_img_create(Function_page_);
+        lv_img_set_src(playback_img_, image_path"playback_on.png");
+        lv_obj_align_to(playback_img_, silent_record_img_, LV_ALIGN_OUT_RIGHT_MID, size_w(10), size_h(0));
+
+        lv_obj_t* slash_img4_ = lv_img_create(Function_page_);
+        lv_img_set_src(slash_img4_, image_path"slash.png");
+        lv_obj_align_to(slash_img4_, playback_img_, LV_ALIGN_OUT_RIGHT_MID, -size_w(4), size_h(0));
+
+		lv_obj_t* bar_wifi_img_ = lv_img_create(Function_page_);
+        lv_img_set_src(bar_wifi_img_, image_path"0wifi.png");
+        lv_obj_align_to(bar_wifi_img_, slash_img4_, LV_ALIGN_OUT_RIGHT_MID, -size_w(4), size_h(0));
+#endif
+    }
+    if (Function_bar_flag != flag) {
+        if (flag) {
+            lv_obj_clear_flag(Function_page_, LV_OBJ_FLAG_HIDDEN);
+        }
+        else {
+            lv_obj_add_flag(Function_page_, LV_OBJ_FLAG_HIDDEN);
+        }
+        Function_bar_flag = flag;
+    }
+	GlobalPage::Instance()->page_main()->Function_bar_cnt = 0;
+}
+
 
 void PageMain::BtnEvent(lv_event_t* e)
 {
@@ -335,14 +503,27 @@ void PageMain::BtnEvent(lv_event_t* e)
 			page_main->LockCurrentFile();
 		}
 		else if (user_data == RecordPageBtnFlag_Wifi) {
-           page_main->WifiEnable(!page_main->wifi_enable_);
+			
+    		page_main->WifiEnable(!page_main->wifi_enable_);
+		    if(GlobalPage::Instance()->page_main()->playsound_flag_){
+				
+			    std::string sound_file = kAudioPathLan;
+                if(page_main->wifi_enable_){
+
+            		sound_file += "WiFi is turned on.pcm";
+                }else{
+
+    				sound_file += "WiFi is turned off.pcm";
+                }
+				MppMdl::Instance()->PlaySound(sound_file.c_str());
+			}
 		}
 	}
 }
 
 int PageMain::WifiEnable(bool enable)
 {
-	XMLogI("WifiEnable enable = %d", enable);
+	XMLogI("WifiEnable enable = %d \r\n", enable);
 	if (wifi_enable_ == enable) {
 		XMLogE("WifiEnable error");
 		return -1;
@@ -359,25 +540,27 @@ int PageMain::WifiEnable(bool enable)
 		GlobalData::Instance()->app_page_ = APP_PAGE_PREVIEW;
 		lv_img_set_src(wifi_img_, image_path"0wifi.png");
 
-		
-		// if (wifi_id_label_ == NULL && wifi_password_label_==NULL) {
-		// 	WIFI_MAC_PARAM_S wifi_param;
-		// 	memset(wifi_param.ssid, 0, sizeof(wifi_param.ssid));
-		// 	memset(wifi_param.ssid, 0, sizeof(wifi_param.password));
-		// 	memset(wifi_param.mac, 0, sizeof(wifi_param.mac));
-		// 	XM_Middleware_WIFI_GetMacParam(&wifi_param);
+#if X2V50_2_PRODUCT_TEST//生产测试录像页面显示wifi名称和密码
+		 if (wifi_id_label_ == NULL && wifi_password_label_==NULL) {
+		 	WIFI_MAC_PARAM_S wifi_param;
+		 	memset(wifi_param.ssid, 0, sizeof(wifi_param.ssid));
+		 	memset(wifi_param.ssid, 0, sizeof(wifi_param.password));
+		 	memset(wifi_param.mac, 0, sizeof(wifi_param.mac));
+		 	XM_Middleware_WIFI_GetMacParam(&wifi_param);
 			
-		// 	wifi_id_label_ = lv_label_create(main_page_);
-		// 	lv_label_set_text_fmt(wifi_id_label_, "Wifi ssid: ""%s",wifi_param.ssid);
-		// 	 if(!touch_plan){
-		// 	  lv_obj_align(wifi_id_label_, LV_ALIGN_BOTTOM_LEFT, size_w(10), -size_h(40));
-		// 	 }else{
-        //       lv_obj_align(wifi_id_label_, LV_ALIGN_BOTTOM_LEFT, size_w(10), -size_h(80));
-		// 	 }
-		// 	wifi_password_label_ = lv_label_create(main_page_);
-		// 	lv_label_set_text_fmt(wifi_password_label_, "Wifi password: ""%s",wifi_param.password);
-		// 	lv_obj_align_to(wifi_password_label_,wifi_id_label_, LV_ALIGN_BOTTOM_LEFT, size_w(0), size_h(25));
-		// }
+		 	wifi_id_label_ = lv_label_create(main_page_);
+		 	lv_label_set_text_fmt(wifi_id_label_, "Wifi ssid: ""%s",wifi_param.ssid);
+		 	 if(!touch_plan){
+		 	  lv_obj_align(wifi_id_label_, LV_ALIGN_BOTTOM_LEFT, size_w(50), -size_h(60));
+		 	 }else{
+               lv_obj_align(wifi_id_label_, LV_ALIGN_BOTTOM_LEFT, size_w(50), -size_h(45));
+		 	 }
+		 	wifi_password_label_ = lv_label_create(main_page_);
+		 	lv_label_set_text_fmt(wifi_password_label_, "Wifi password: ""%s",wifi_param.password);
+		 	lv_obj_align_to(wifi_password_label_,wifi_id_label_, LV_ALIGN_BOTTOM_LEFT, size_w(0), size_h(25));
+		 }
+#endif
+		
 		XM_Middleware_WIFI_WifiEnable(true);
 		MppMdl::Instance()->SubStreamEnable(false);
 		//开启server
@@ -492,8 +675,10 @@ void PageMain::AppMenuValue(void)
 	   param_items.gsr_sensitivity=-1;
 #endif
 
-		GlobalData::Instance()->car_config()->GetValue(CFG_Operation_Key_Voice, cfg_value);
-		param_items.key_tone = cfg_value.bool_value;
+		GlobalData::Instance()->car_config()->GetValue(CFG_Operation_boot_Voice, cfg_value);
+		param_items.speaker = cfg_value.int_value;
+
+		param_items.key_tone = -1;
 
 #if COMPACT_RECORD_EN
 		GlobalData::Instance()->car_config()->GetValue(CFG_Operation_Compact_Record_Duration, cfg_value);
@@ -661,7 +846,7 @@ void PageMain::UpdateTime(lv_timer_t* timer)
 						strncat(id, &pstNetAttr.mac[12], 2);
 						strncat(id, &pstNetAttr.mac[15], 2);
 						//默认wifi名为X2C3加mac地址后4位，密码是1234567890
-						std::string wifi_name = " X2V50_";//"X27W_";
+						std::string wifi_name = "HisDvr-";//"X27W_"; X2V50_ HisDvr- 
 						wifi_name += id;
 						strcpy(wifi_param.name, wifi_name.c_str());
 						strcpy(wifi_param.password, "12345678");
@@ -679,6 +864,57 @@ void PageMain::UpdateTime(lv_timer_t* timer)
 				object->pre_time_ = time;
 				lv_label_set_text_fmt(object->time_label_, "%02d:%02d:%02d",
 					current_time->tm_hour, current_time->tm_min, current_time->tm_sec);
+				
+				#if 1//疲劳提醒	
+					if(GlobalData::Instance()->UI_mode_== UIMode_Videotape && object->Fatigue_reminder_value){
+						object->Fatigue_reminder_cnt++;
+						if (object->Fatigue_reminder_cnt > object->Fatigue_reminder_value*60*60) {
+							object->Fatigue_reminder_cnt = 0;
+
+						    std::string sound_file;
+						    if(GlobalPage::Instance()->page_main()->language_value_ == Russian){
+								
+								sound_file = kAudioPath;
+								sound_file += "dididi.pcm";
+							}else{
+							    
+								sound_file = kAudioPathLan;
+								sound_file += "Fatigue driving, please park nearby and rest.pcm";
+							}
+							
+		                    MppMdl::Instance()->PlaySound(sound_file.c_str());
+							if (object->Fatigue_reminder_value==1){
+								object->OpenTipBox("You have been driving for 1 hour, please pay attention to rest");
+							} else if (object->Fatigue_reminder_value==2){
+								object->OpenTipBox("You have been driving for 2 hours, please pay attention to rest");
+							}else if (object->Fatigue_reminder_value==3){
+								object->OpenTipBox("You have been driving for 3 hours, please pay attention to rest");
+							}
+						}
+					}
+				#endif
+				
+                #if 1//隐藏功能栏
+                    if (object->Function_bar_flag) {
+                        object->Function_bar_cnt++;
+                        if (object->Function_bar_cnt >= 5) {
+                            object->Function_bar_cnt = 0;
+                            object->Function_bar(false);
+                        }
+                    }
+                #endif
+
+				#if 1
+				//30秒循环播报SD卡状态语音
+				if(GlobalPage::Instance()->page_main()->Handtip_box_){
+					
+    				GlobalPage::Instance()->page_main()->audio_flag_++;
+    				if (GlobalPage::Instance()->page_main()->audio_flag_ % SD_CARD_PLAY_INTERVAL_TIME == 0)
+    				{
+    					GlobalPage::Instance()->page_main()->PlaySdCardStatus();
+    				}
+    				}
+				#endif
 			}
 
 			int date = current_time->tm_year + current_time->tm_mon + current_time->tm_mday;
@@ -787,6 +1023,33 @@ void PageMain::CloseTipBox(lv_timer_t* timer)
 	lv_obj_t* user_data = (lv_obj_t*)timer->user_data;
 	lv_obj_del(user_data);
 	lv_timer_del(timer);
+}
+
+void PageMain::HandOpenTipBox(void)
+{
+	XMLogW("[HandOpenTipBox] g_sd_status = %d \r\n", g_sd_status);
+	//if (g_sd_status != XM_SD_NOEXIST || record_time_label_ != NULL record_timer_ != NULL){
+	if (g_sd_status != XM_SD_NOEXIST){
+		
+		Handtip_box_ = NULL;
+        return;
+	}
+
+	RED_ON;
+	GREEN_OFF;
+
+	Handtip_box_ = lv_create_page(lv_scr_act(), size_w(220), size_h(130),
+		lv_color_make(99, 99, 99), 0, 2, lv_font_all, lv_color_white(), 0);
+	lv_obj_align(Handtip_box_, LV_ALIGN_CENTER, 0, 0);
+
+	lv_obj_set_style_border_color(Handtip_box_, lv_color_make(99, 99, 99), 0);
+	lv_obj_set_style_radius(Handtip_box_, 10, 0);
+
+	lv_obj_t* label = lv_create_image(Handtip_box_, size_w(28), size_w(28), image_path"msgwarn1.png");
+		lv_obj_align(label, LV_ALIGN_TOP_MID, 0, size_h(6));
+
+	label = lv_create_label(Handtip_box_, size_w(220), GetParsedString("Please insert SD card"), LV_TEXT_ALIGN_CENTER, 0);
+	lv_obj_align(label, LV_ALIGN_CENTER, 0, size_h(14));
 }
 
 void PageMain::WiFi_switch(lv_event_t* e)
@@ -1062,6 +1325,11 @@ void PageMain::CfgInit()
 		lv_timer_pause(shutdown_timer_);
 	}
 
+	//疲劳驾驶提醒
+	cfg_value.int_value = 0;
+    GlobalData::Instance()->car_config()->GetValue(CFG_Operation_Fatigue_reminder, cfg_value);
+    GlobalPage::Instance()->page_main()->Fatigue_reminder_value=cfg_value.int_value; 
+	
 	//后拉镜像
 	// cfg_value.bool_value = false;
 	// GlobalData::Instance()->car_config()->GetValue(CFG_Operation_Behind_Mirror, cfg_value);
@@ -1359,7 +1627,11 @@ void PageMain::LockCurrentFile()
 			XM_Middleware_Storage_LockCurrentFile(XM_STORAGE_SDCard_0, Direction_Behind, true);
 			//OpenTipBox("The current file is locked");
 			RED_ON;
-			Voice_prompts("Video locked_16k.pcm");
+			
+			if(GlobalPage::Instance()->page_main()->language_value_ != Russian){
+				
+			    Voice_prompts("Video locked_16k.pcm");
+			}
 		}
 	}
 	else {
@@ -1376,6 +1648,19 @@ void PageMain::LockCurrentFile()
 			XM_Middleware_Storage_LockCurrentFile(XM_STORAGE_SDCard_0, Direction_Behind, false);
 		}
 		RED_OFF;
+	}
+}
+
+void PageMain::PlaySdCardStatus()
+{
+	std::string sound_file = kAudioPathLan;
+	// 30秒循环重新计时
+	GlobalPage::Instance()->page_main()->audio_flag_ = 1;
+
+	if (g_sd_status == XM_SD_NOEXIST) {
+		
+		sound_file += "Please insert the SD card_16k.pcm";
+		MppMdl::Instance()->PlaySound(sound_file.c_str());
 	}
 }
 
@@ -1518,8 +1803,15 @@ void PageMain::CheckSDStatus(bool checked_speed, bool need_speed_tip, bool need_
 		OpenTipBox("Memory card is not read-write, please format the memory card");
 	}
 	else if (g_sd_status == XM_SD_NOSPACE) {
-		if(nospace_tip)
+		if(nospace_tip){
+			
 			OpenTipBox("SD card space is insufficient");
+			//if(GlobalPage::Instance()->page_main()->language_value_ == Russian)
+			{
+				
+			    Voice_prompts("SD card is full.pcm");
+			}
+		}
 	}
 	else {
 		OpenTipBox("Please insert SD card");
@@ -1577,7 +1869,14 @@ void PageMain::ShutDown(ShutDownMode shutdownmode, bool play_pic, bool close_pre
         //关闭录像
 		GlobalData::Instance()->ui_event_cb_(XM_UI_STOP_STORAGE, NULL, NULL);
 		//关闭预览
-		lv_timer_create(ShutDownTimer_PullPowerOn, 350, (void*)shutdownmode);
+		#if 1
+		lv_timer_create(ShutDownTimer_PullPowerOn, 600, (void*)shutdownmode);//350
+		#else
+		
+		shutDown(shutdownmode);
+		return;
+		#endif
+		
 		if (close_preview)
 			GlobalPage::Instance()->page_main()->ClosePreview(false);
 		//停止lvgl画面刷新
@@ -1618,7 +1917,7 @@ void PageMain::ShutDown(ShutDownMode shutdownmode, bool play_pic, bool close_pre
 		}
 		
 		XMLogI("before Create ShutDownTimer");
-		lv_timer_create(ShutDownTimer, 1500, (void*)shutdownmode);
+		lv_timer_create(ShutDownTimer, 400, (void*)shutdownmode);//1500 关机噗声改1
 		XMLogI("after Create ShutDownTimer");
 	}
 	else {
@@ -1687,7 +1986,12 @@ void PageMain::PWREvent()
 
 void PageMain::SetListStyle(lv_obj_t* list, lv_coord_t width, lv_coord_t height)
 {
-	lv_obj_set_size(list, width+30, height);
+#if 1
+
+    lv_obj_set_size(list, width+30, height-25);
+#else
+    lv_obj_set_size(list, width+30, height);
+#endif
 	lv_obj_set_style_border_width(list, 0, 0);
 	lv_obj_set_style_bg_color(list, lv_color_make(68, 68, 68), 0);
 	lv_obj_set_style_radius(list, 0, 0);
@@ -1880,7 +2184,7 @@ void PageMain::ExitCompactRecord()
 	}
 	//关闭缩时录影
 	CloseRecord(true);
-	
+	Fatigue_reminder_cnt = 0;
 	//息屏恢复正常
 	if (rest_screen_timer_) {
 		cfg_value.int_value = 0;
@@ -2217,10 +2521,11 @@ void PageMain::Voice_prompts(const char* file_name)
 	XM_CONFIG_VALUE cfg_value;
 	 cfg_value.int_value = SimpChinese;
 	 GlobalData::Instance()->car_config()->GetValue(CFG_Operation_Language, cfg_value);
-	if( cfg_value.int_value == English){
+	//if( cfg_value.int_value == English)
+	  {
 		 GlobalData::Instance()->car_config()->GetValue(CFG_Operation_boot_Voice, cfg_value);
-        if(cfg_value.bool_value){
-		std::string sound_file = kAudioPath;
+        if(cfg_value.int_value){
+		std::string sound_file = kAudioPathLan;
 		sound_file += file_name;
 		MppMdl::Instance()->PlaySound(sound_file.c_str());
 	  }

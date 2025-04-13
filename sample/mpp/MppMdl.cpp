@@ -2273,7 +2273,7 @@ int video_downscale(VIDEO_FRAME_INFO_S *src_frame, VIDEO_FRAME_INFO_S *dst_frame
 		}
 	}
 
-	Anti_Aliasing_downscale(s_w, s_h, d_w, d_h, s_y_addr, d_y_addr, 0, !mirror);
+	Anti_Aliasing_downscale2(s_w, s_h, d_w, d_h, s_y_addr, d_y_addr, 0, !mirror);
 
 	XM_MPI_SYS_MmzFlushCache(d_phy_addr, d_y_addr, d_w * d_h * 3 / 2);
 	XM_MPI_SYS_Munmap(s_y_addr, s_w * s_h * 3 / 2);

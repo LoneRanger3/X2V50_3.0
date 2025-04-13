@@ -74,6 +74,10 @@ public:
 	int WifiEnable(bool enable);
 	void AppMenuValue(void);
 	void Remaining_update_time();
+    void Function_bar(bool flag);
+	void HandOpenTipBox(void);
+	void PlaySdCardStatus(void);
+	
 private:
 	void CreatePage();
 	void CompactRecord();
@@ -98,6 +102,8 @@ public:
 	lv_obj_t* wifi_tip_win_;
 	lv_obj_t* record_resolution_label_;
 	lv_obj_t* main_page_;
+	lv_obj_t* Function_page_;
+	lv_obj_t* Settings_function_page_;
 	lv_obj_t* SD_img_;
 	lv_obj_t* mode_label_;
 	lv_obj_t* logo_label_;
@@ -141,6 +147,15 @@ public:
 	lv_obj_t* wifi_password_label_;
 	bool wifi_prepared_;
 	lv_obj_t* reverse_line_img_;
+	int Fatigue_reminder_cnt;
+	int Fatigue_reminder_value;
+	int Function_bar_cnt;
+    bool Function_bar_flag;
+	lv_obj_t* Handtip_box_;
+	int audio_flag_;
+	int language_value_;
+	int playsound_flag_;
+	
 private:
 	lv_obj_t* time_label_;
 	lv_obj_t* date_label_;
@@ -150,6 +165,7 @@ private:
 	int pre_camera_status_;
 	bool led_on_;
 	lv_obj_t* record_img_;
+	lv_obj_t* settings_record_img_;
 	lv_obj_t* photo_img_;
 	lv_obj_t* set_img_;
 	lv_obj_t* playback_img_;

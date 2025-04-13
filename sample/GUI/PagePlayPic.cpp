@@ -79,6 +79,9 @@ void PagePlayPic::CreatePage()
 		}
 	}
   
+#if 1
+	GlobalPage::Instance()->page_set()->Createfunction_bar(play_pic_page_, 23, 0,false,true);
+#endif
 }
 
 void PagePlayPic::BtnEvent(lv_event_t* e)
@@ -149,6 +152,9 @@ void PagePlayPic::OpenSetPage()
 	}
     GlobalPage::Instance()->page_playback()->SelectFileStyle(menu_list_, screen_width, size_h(298));
 	lv_group_focus_next(GlobalData::Instance()->group);
+#if 1
+	GlobalPage::Instance()->page_set()->Createfunction_bar(set_page_,35,7,true,false);
+#endif
 }
 void PagePlayPic::DelSetPageEvent(lv_event_t* e)
 {

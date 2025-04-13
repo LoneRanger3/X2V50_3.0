@@ -2,6 +2,7 @@
 #include "global_page.h"
 #include "PageSet.h"
 #include "mpp/MppMdl.h"
+#include "gps.h"
 extern int g_sd_status;
 
 PageSet::PageSet()
@@ -43,6 +44,60 @@ void SetMenuStyle(lv_obj_t* list, lv_coord_t width, lv_coord_t height)
         }
     }
 }
+
+#define function_bar_ofs_y 7
+
+void PageSet::Createfunction_bar(lv_obj_t* curr_page, lv_coord_t height, lv_coord_t y_ofs, bool ok_enable, bool delete_enable)
+{
+#if 1
+	lv_obj_t* Settings_function_page_ = lv_create_page(curr_page, screen_width, size_h(height),
+		lv_color_make(68, 68, 68), 0, 0, lv_font_all, lv_color_white(), 0);//46 36 30
+	lv_obj_align(Settings_function_page_, LV_ALIGN_BOTTOM_MID, 0, 0);
+
+	if(ok_enable)
+	{
+    	lv_obj_t* ok_img_= lv_img_create(Settings_function_page_);
+    	lv_img_set_src(ok_img_, image_path"ok.png");
+    	lv_obj_align(ok_img_, LV_ALIGN_BOTTOM_LEFT, size_w(8), -size_h(y_ofs));
+	}
+
+	#if 1
+	if(delete_enable){
+		
+        lv_obj_t* lock_img_ = lv_img_create(Settings_function_page_);
+        lv_img_set_src(lock_img_, image_path"lock_on.png");
+        //lv_obj_align_to(lock_img_, ok_img_, LV_ALIGN_OUT_RIGHT_MID, size_w(19), 0);
+		lv_obj_align(lock_img_, LV_ALIGN_BOTTOM_LEFT, size_w(53), 0);
+		
+        lv_obj_t* slash_img_ = lv_img_create(Settings_function_page_);
+        lv_img_set_src(slash_img_, image_path"slash.png");
+        lv_obj_align_to(slash_img_, lock_img_, LV_ALIGN_OUT_RIGHT_MID, -size_w(6), size_h(0));
+    	
+    	lv_obj_t* delete_img_ = lv_img_create(Settings_function_page_);
+    	lv_img_set_src(delete_img_, image_path"delete.png");
+    	lv_obj_align_to(delete_img_, slash_img_, LV_ALIGN_OUT_RIGHT_MID, -size_w(4), 0);
+	}
+	#else
+	lv_obj_t* delete_img_= lv_img_create(Settings_function_page_);
+	lv_img_set_src(delete_img_, image_path"ok.png");
+	lv_obj_align(delete_img_, LV_ALIGN_BOTTOM_LEFT, size_w(72), -size_h(y_ofs));
+    #endif
+	
+	lv_obj_t* up_img_= lv_img_create(Settings_function_page_);
+	lv_img_set_src(up_img_, image_path"up.png");
+	lv_obj_align(up_img_, LV_ALIGN_BOTTOM_MID, -size_w(6), -size_h(y_ofs));
+
+	lv_obj_t* down_img_= lv_img_create(Settings_function_page_);
+	lv_img_set_src(down_img_, image_path"down.png");
+	//lv_obj_align(down_img_, LV_ALIGN_BOTTOM_MID, size_w(0), size_h(0));
+	lv_obj_align_to(down_img_, up_img_, LV_ALIGN_OUT_RIGHT_MID, size_w(50), size_h(0));
+	lv_obj_t* return_img_= lv_img_create(Settings_function_page_);
+	lv_img_set_src(return_img_, image_path"set_return.png");
+	lv_obj_align(return_img_, LV_ALIGN_BOTTOM_RIGHT, -size_w(8), -size_h(y_ofs));
+#endif
+
+}
+
 void PageSet::CreatePage()
 {
 	set_page_ = lv_create_page(lv_scr_act(), screen_width, screen_height, lv_color_make(16, 16, 16), 0, 0,
@@ -66,6 +121,11 @@ void PageSet::CreatePage()
     lv_obj_add_event_cb(sys_set_list_, OpenSubpage, LV_EVENT_ALL, NULL);
    uint8_t Total_num =sizeof(sys_menu_config_table)/sizeof(sys_menu_config_table[0]);
 	lv_obj_t* set_btn[100] = { NULL };
+    #if GPS_EN
+    if (!gps_insert_flag) {
+        Total_num=Total_num - 3;
+        }
+    #endif
 	for (int i = 0;i < Total_num;i++) {
 
 		set_btn[i] = lv_create_btn(sys_set_list_, screen_width, 58, lv_color_make(68, 68, 68), 2,
@@ -87,14 +147,22 @@ void PageSet::CreatePage()
 	}
 
     SetMenuStyle(sys_set_list_, screen_width, size_h(298));
+
+	#if 1
+	Createfunction_bar(set_page_,36,7,true,false);
+	#endif
 }
 
 void PageSet::DelSetPageEvent(lv_event_t* e)
 {
+    int Total_num=Subpage_Total;
 	lv_event_code_t code = lv_event_get_code(e);
 	if (code == LV_EVENT_DELETE) {
 		PageSet* page_set = GlobalPage::Instance()->page_set();
-		for (int i = 0;i < Subpage_Total;i++) {
+    #if GPS_EN
+		if (!gps_insert_flag) Total_num=Subpage_Total - 3;
+	 #endif	
+		for (int i = 0;i < Total_num;i++) {
 			lv_obj_remove_event_cb(lv_obj_get_parent(page_set->menu_img_[i]), page_set->OpenSubpage);
 		}
 	}
@@ -192,15 +260,26 @@ void PageSet::OpenSubpage(lv_event_t* e)
             page_sys_set->OpenDefaultSetPage();
         }else if (user_data == Subpage_Edition) {
             page_sys_set->OpenEditionPage();
-        }else {
-
+#if GPS_EN
+        }else if (user_data == Subpage_GpsInfo) {
+            page_sys_set->OpenGpsInfoPage();
+#endif
+        }
+        else {
+            #if 1
+			lv_obj_t* page = lv_create_page(lv_scr_act(), screen_width, size_h(158),
+				lv_color_make(16, 16, 16), 0, 0, lv_font_all, lv_color_white(), 0);
+			lv_obj_set_pos(page, 0, 43);//42
+			
+			#else
             lv_obj_t* page = lv_obj_create(lv_scr_act());
+			#endif
             lv_obj_set_style_text_font(page, lv_font_all, 0);
             lv_obj_set_scrollbar_mode(page, LV_SCROLLBAR_MODE_OFF);
             lv_obj_set_scroll_dir(page,LV_DIR_VER);
             lv_obj_add_style(page, &GlobalPage::Instance()->page_set()->subpage_style_, 0);
             lv_obj_add_event_cb(page, GlobalPage::Instance()->page_sys_set()->DeletedEvent, LV_EVENT_DELETE, NULL);
-            lv_obj_align(page, LV_ALIGN_TOP_MID, 0, size_h(62) + start_y);
+            //lv_obj_align(page, LV_ALIGN_TOP_MID, 0, size_h(48) + start_y);
 
             lv_obj_t* list = lv_list_create(page);
 
@@ -291,7 +370,14 @@ void PageSet::OpenSubpage_Function(lv_event_t* e)
          page_video_set->ChangeRecordSoundEvent(e);
           break;
      case Subpage_KeyTone:
-         page_sys_set->ChangeKeyToneEvent(e);
+         //page_sys_set->ChangeKeyToneEvent(e);
+         page_sys_set->ChangeBootToneEvent(e);
+          break;
+     case Subpage_Watermark:
+	     page_video_set->ChangeDateWatermarkEvent(e);
+          break;
+     case Subpage_Fatigue_reminder:
+	     page_sys_set->ChangeFatigueReminder(e);
           break;
      case Subpage_BootTone:
          page_sys_set->ChangeBootToneEvent(e);
@@ -314,6 +400,14 @@ void PageSet::OpenSubpage_Function(lv_event_t* e)
      case Subpage_Mirror:
          page_video_set->ChangeMirrorSwitch(e);
          break;
+#if GPS_EN 
+     case Subpage_GpsWatermark:
+         page_sys_set->GpsWatermark(e);
+         break;
+     case Subpage_SpeedUnit:
+         page_sys_set->ChangeSpeedUnit(e);
+         break;
+#endif
     }
 
 }

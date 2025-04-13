@@ -16,6 +16,35 @@
 #define VOICE_CONTROL_EN    0    //0-屏蔽声控，注意默认菜单配置参数要关闭                  1-添加声控  
 #define COMPACT_RECORD_EN   1    //0去掉缩时录影功能，注意默认菜单配置参数要关闭            1-添加缩时录影功能
 #define G_SENSOR_EN         1    //0去掉重力功能 ，注意默认菜单配置参数要关闭               1-添加重力功能
+#define GPS_EN              0    //0不支持GPS               1-支持GPS功能
+#define OSD_SHOW_ADJUST     1    //搜不到gps时间水印下移，0关闭，1开启
+#define X2V50_PROJ_DEBUG    1 
+#define X2V50_2_PRODUCT_TEST    0    //生产测试(1.录像页面显示wifi名称密码。2.gsensor灵敏度打开。3.WiFi默认打开。4.gps模拟关闭)
+#define SD_CARD_PLAY_INTERVAL_TIME 30  //SD卡播报间隔
+#define AIPAIPAI_PROJECT_ARABIC 1  //爱拍拍阿拉伯地区定制
+
+#if AIPAIPAI_PROJECT_ARABIC
+#define COMPACT_RECORD_EN   0   //爱拍拍阿拉伯地区不开缩时录影，只开停车监控
+#endif
+
+#if defined SUPPORT_4K
+
+#if 0 //720p开启
+#define OSD_TIME_ADJUST_Y -190
+#define OSD_GPS_ADJUST_Y  420
+#else
+#define OSD_TIME_ADJUST_Y 0
+#define OSD_GPS_ADJUST_Y  420
+#define OSD_TIME_OFS_X  750
+
+#endif
+
+#else
+
+#define OSD_TIME_ADJUST_Y 0
+#define OSD_GPS_ADJUST_Y  420
+
+#endif
 
 int AlarmRegionCoorSw(float coor, float length, bool flag);
 
@@ -43,6 +72,7 @@ enum Language
     Spanish,      //西班牙
     Portuguese,       //葡萄牙
     Polish,       //波兰语
+    Arabic,      //阿拉伯语
 };
 
 enum Sensitivity
@@ -60,7 +90,18 @@ enum XM_CONFIG_VALUE_TYPE
 	CFG_Operation_Value_Bool,
 	CFG_Operation_Value_Float,
 };
-
+enum Volume
+{
+	Volume_Close,
+	Volume_Low,
+	Volume_Mid,
+    Volume_High,
+};
+enum SpeeduUnit
+{
+    SpeeduUnit_Km = 0, //公里/小时
+    SpeeduUnit_Mile,  //英里/小时
+};
 enum XM_CONFIG_OPERATION
 {
 	//系统设置
@@ -90,6 +131,9 @@ enum XM_CONFIG_OPERATION
 	CFG_Operation_Camera,
 	CFG_Operation_Date_Watermark,
     CFG_Operation_WiFi,
+    CFG_Operation_Fatigue_reminder, //疲劳提醒
+    CFG_Operation_GPS_Watermark,
+    CFG_Operation_GPS_Unit,
 	CFG_Operation_NEED_REPAIR_SDCARD,	//需要fsck修复sd卡
     CFG_Operation_GAMMA_DELTA,
     CFG_Operation_NULL,
@@ -116,9 +160,13 @@ const XM_CONFIG_UNIT CFG_ALL_OPERATION_UNITS[] =
 	//系统设置初始化
 	{ CFG_Operation_Lcd_OffTime,			"",		"lcd_offtime",			CFG_Operation_Value_Int,	0},//0
 	{ CFG_Operation_Lcd_Light,			    "",		"lcd_light",			CFG_Operation_Value_Int,	60},
-	{ CFG_Operation_Language,				"",		"language",				CFG_Operation_Value_Int,	English},//  English  SimpChinese TradChinese
+	#if AIPAIPAI_PROJECT_ARABIC
+	{ CFG_Operation_Language,				"",		"language",				CFG_Operation_Value_Int,	Arabic},//  Arabic
+	#else
+	{ CFG_Operation_Language,				"",		"language",				CFG_Operation_Value_Int,	English},//  English
+	#endif
 	{ CFG_Operation_Key_Voice,				"",		"key_voice",			CFG_Operation_Value_Bool,	true},
-	{ CFG_Operation_boot_Voice,				"",		"boot_voice",			CFG_Operation_Value_Bool,	true},
+	{ CFG_Operation_boot_Voice,				"",		"boot_voice",			CFG_Operation_Value_Int,	Volume_Mid},//Volume_High
 	{ CFG_Operation_Acc_Power_Supply,		"",		"acc_power_supply",		CFG_Operation_Value_Bool,	true},
 	{ CFG_Operation_Voice_Control,		    "",		"Voice_Control",		CFG_Operation_Value_Bool,	false},// false true
 	{ CFG_Operation_AutoShutdown_Time,			"",	"AutoShutdown_Time",	CFG_Operation_Value_Int,	0},
@@ -137,14 +185,25 @@ const XM_CONFIG_UNIT CFG_ALL_OPERATION_UNITS[] =
 	{ CFG_Operation_Reject_Flicker,			"",		"Reject_Flicker",		CFG_Operation_Value_Int,	0},
 	{ CFG_Operation_Compact_Record_Fps,			"",		"Compact_Record_Fps",			CFG_Operation_Value_Int,	0},
 	{ CFG_Operation_Compact_Record_Duration,	"",		"Compact_Record_Duration",		CFG_Operation_Value_Int,	0},
-	{ CFG_Operation_Collision_Sensitivity,		"",		"Collision_Sensitivity",		CFG_Operation_Value_Int,	Sensitivity_Close}, //Sensitivity_Low  Sensitivity_Mid
+    #if X2V50_2_PRODUCT_TEST
+	{ CFG_Operation_Collision_Sensitivity,		"",		"Collision_Sensitivity",		CFG_Operation_Value_Int,	Sensitivity_Mid},
+	#else
+	{ CFG_Operation_Collision_Sensitivity,		"",		"Collision_Sensitivity",		CFG_Operation_Value_Int,	Sensitivity_Close},
+	#endif
 	{ CFG_Operation_Record_Voice,				"",		"Record_Voice",					CFG_Operation_Value_Bool,	true},
 	{ CFG_Operation_Collision_Startup,			"",		"Collision_Startup",			CFG_Operation_Value_Bool,	false},
 	{ CFG_Operation_Car_Charger,				"",		"Car_Charger",					CFG_Operation_Value_Bool,	true},
 	{ CFG_Operation_Camera,						"",		"Camera",						CFG_Operation_Value_Int,	XM_PLAY_BOTH},
 	{ CFG_Operation_Date_Watermark,				"",		"Date_Watermark",				CFG_Operation_Value_Bool,	true},
-	{ CFG_Operation_WiFi,				        "",		"wifi",				            CFG_Operation_Value_Bool,	true},
-	{ CFG_Operation_NEED_REPAIR_SDCARD,		"",		"Fsck Sdcard",			            CFG_Operation_Value_Bool,	false},
+	#if X2V50_2_PRODUCT_TEST
+	{ CFG_Operation_WiFi,				        "",		"wifi",				            CFG_Operation_Value_Bool,	true},//生产软件默认打开
+	#else
+	{ CFG_Operation_WiFi,				        "",		"wifi",				            CFG_Operation_Value_Bool,	false},
+	#endif
+    { CFG_Operation_Fatigue_reminder,		    "",		"fatigue",				        CFG_Operation_Value_Int,	0},
+    { CFG_Operation_GPS_Watermark,		         "",		"gps",			    CFG_Operation_Value_Bool,	true},
+    { CFG_Operation_GPS_Unit,				    "",		"speed_unit",				    CFG_Operation_Value_Int,	SpeeduUnit_Km},
+	{ CFG_Operation_NEED_REPAIR_SDCARD,		"",		"Fsck Sdcard",			            CFG_Operation_Value_Bool,	true},
 	{ CFG_Operation_GAMMA_DELTA,		    "",		"DELTA",			                CFG_Operation_Value_Int,	100},
 };
 
@@ -194,6 +253,8 @@ enum SetPageSubpage
 #endif
     Subpage_RecordSound,    //录音
     Subpage_KeyTone,       //按键声音
+    Subpage_Watermark,     //时间水印
+    Subpage_Fatigue_reminder,  //疲劳提醒
     //Subpage_HighDynamicRange,
     //Subpage_LightSourceFrequency,
     Subpage_ExposureCompensation, //曝光补偿
@@ -206,6 +267,11 @@ enum SetPageSubpage
     Subpage_Format,           //格式化存储卡
     Subpage_DefaultSet,      //恢复出厂设置
     Subpage_Edition,        //版本信息
+#if GPS_EN 
+    Subpage_GpsWatermark,//gps水印开关
+    Subpage_SpeedUnit,          //gps速度单位
+    Subpage_GpsInfo,          //gps信息
+#endif
     Subpage_Total,
 
 #if !G_SENSOR_EN
@@ -377,9 +443,9 @@ const struct menu_table sys_menu_config_table[] = {
        Subpage_LanguageSet,                       //菜单列表名
        {image"language.png",image"language-.png"},            //一级菜单图片路径
        "Language",     //一级菜单列表文案
-       {"SimpChinese","TradChinese","Japanese",	"English",/*"Thai",*/"Russian","German","French","Italian","Spanish","Polish"},//二级菜单列表显示的文案
-       {SimpChinese,TradChinese, Japanese, English,/*Thai,*/Russian, German, French, Italian, Spanish, Polish},    //此菜单实际生效的值，默认选项值必定为其中之一
-        10,       //二级菜单个数
+       {"SimpChinese","TradChinese","Japanese",	"English","Russian","German","French","Italian","Spanish","Polish","Arabic"},//二级菜单列表显示的文案 /*"Thai",*/
+       {SimpChinese,TradChinese, Japanese, English,/*Thai,*/Russian, German, French, Italian, Spanish, Polish,Arabic},    //此菜单实际生效的值，默认选项值必定为其中之一
+        11,       //二级菜单个数
        CFG_Operation_Language,
     },
 #if G_SENSOR_EN
@@ -501,6 +567,16 @@ const struct menu_table sys_menu_config_table[] = {
       2,       //二级菜单个数
      CFG_Operation_Key_Voice,
   },
+  //疲劳驾驶
+  {
+    Subpage_Fatigue_reminder,  //疲劳提醒,                       //菜单列表名
+     {image"key_tone_off.png",image"key_tone_off-.png"},            //一级菜单图片路径
+     "Fatigue reminder",     //一级菜单列表文案
+     {"Close",	"1 hour","2 hours","3 hours"},//二级菜单列表显示的文案
+     {0, 1,2,3},    //此菜单实际生效的值，默认选项值必定为其中之一
+      4,       //二级菜单个数
+      CFG_Operation_Fatigue_reminder,
+  },
 //   //开机音
 //   {
 //      Subpage_BootTone,                       //菜单列表名
@@ -595,8 +671,40 @@ const struct menu_table sys_menu_config_table[] = {
      {0},    //此菜单实际生效的值，默认选项值必定为其中之一
       0,       //二级菜单个数
       CFG_Operation_NULL,
-  }
+  },
+#if GPS_EN 
+  //GPS开关
+  {
+      Subpage_GpsWatermark,                       //菜单列表名
+      { NULL},            //一级菜单图片路径
+          "GPS Switch",     //一级菜单列表文案
+      { "Close",	"Open" },//二级菜单列表显示的文案
+      { Switchoff, Switchon },    //此菜单实际生效的值，默认选项值必定为其中之一
+          2,       //二级菜单个数
+          CFG_Operation_GPS_Watermark,
+    },
+    //GPS速度单位
+    {
+        Subpage_SpeedUnit,                       //菜单列表名
+        {NULL},            //一级菜单图片路径
+         "Speed unit",     //一级菜单列表文案
+         {"km/h","mile/h"},//二级菜单列表显示的文案
+         {0,1},    //此菜单实际生效的值，默认选项值必定为其中之一
+          2,       //二级菜单个数
+         CFG_Operation_GPS_Unit,
+    },
 
+    //GPS信息
+    {
+        Subpage_GpsInfo,                       //菜单列表名
+        {NULL},            //一级菜单图片路径
+         "GPS information",     //一级菜单列表文案
+         {NULL},//二级菜单列表显示的文案
+         {0},    //此菜单实际生效的值，默认选项值必定为其中之一
+          0,       //二级菜单个数
+         CFG_Operation_NULL,
+    },
+#endif
 };
 
 

@@ -2,7 +2,8 @@
 #include "CommDef.h"
 const char* kTFCardPath = "/mnt/tfcard";
 const char* kUDiskPath = "/mnt/usb";
-const char* kAudioPath = "/mnt/custom/Audio/";
+char* kAudioPath = "/mnt/custom/Audio/";
+char* kAudioPathLan = "/mnt/custom/Audio/english/";
 const char* kUpdateFileName = "/home/netall_XM650V200_CAR_X2V50_3.bin";
 const char* kSysTime = "/mnt/mtd/Config/sys_time";
 const int k3KHeight = 1800;
@@ -14,6 +15,7 @@ extern lv_font_t lv_font_Japanese_20;
 extern lv_font_t lv_font_europe_20;
 extern lv_font_t lv_font_russian_18;
 extern lv_font_t lv_font_thai_18;
+extern lv_font_t lv_font_Arabic_18;
 
  lv_font_t* lv_font_size[] = {
   &lv_font_simpchinese_22,
@@ -28,6 +30,7 @@ extern lv_font_t lv_font_thai_18;
   & lv_font_europe_20,
   & lv_font_europe_20,
   & lv_font_europe_20
+  //&lv_font_Arabic_18
 };
 lv_font_t* lv_font_all= NULL;
 extern "C"

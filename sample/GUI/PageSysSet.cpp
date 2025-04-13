@@ -10,13 +10,14 @@
 #include "TimeUtil.h"
 #include "periphery/PeripheryManager.h"
 #include "mpp/MppMdl.h"
+#include "network/HTTPSerMdl.h"
 #include "osd_user.h"
 
 extern int g_sd_status;
 #include "log/LogFileManager.h"
-
+#include "gps.h"
 PageSysSet::PageSysSet() :subpage_width_(screen_width), subpage_height_(size_h(298)), time_page_(NULL),
-voice_control_page_(NULL), format_bar_timer_(NULL), camera_dir_(XM_PLAY_BOTH), upgrade_start_time_(0)
+voice_control_page_(NULL), format_bar_timer_(NULL), camera_dir_(XM_PLAY_BOTH), upgrade_start_time_(0),gps_infomation_timer_(NULL)
 {
 	entry_page_[0] = NULL;
 	entry_page_[1] = NULL;
@@ -528,6 +529,10 @@ void PageSysSet::DeletedEvent(lv_event_t* e)
 	lv_obj_clear_flag(GlobalPage::Instance()->page_set()->sys_set_list_, LV_OBJ_FLAG_HIDDEN);
 	lv_label_set_text(GlobalPage::Instance()->page_set()->title_label_, GetParsedString("Set"));
 	lv_group_focus_obj(GlobalPage::Instance()->page_set()->foucused_obj);
+	if (GlobalPage::Instance()->page_sys_set()->gps_infomation_timer_) {
+		lv_timer_del(GlobalPage::Instance()->page_sys_set()->gps_infomation_timer_);
+		GlobalPage::Instance()->page_sys_set()->gps_infomation_timer_ = NULL;
+    }
 }
 
 void PageSysSet::ChangeLanguage(lv_event_t* e)
@@ -538,9 +543,18 @@ void PageSysSet::ChangeLanguage(lv_event_t* e)
 		XM_CONFIG_VALUE cfg_value;
 		cfg_value.int_value = user_data;
 		set_language(cfg_value.int_value);
+		GlobalPage::Instance()->page_main()->language_value_ = cfg_value.int_value;
 		int ret = GlobalData::Instance()->car_config()->SetValue(CFG_Operation_Language, cfg_value);
 		if (ret < 0) {
 			XMLogE("set config error, opr=CFG_Operation_Language");
+		}
+
+		if(GlobalPage::Instance()->page_main()->language_value_ == Russian){
+			
+			kAudioPathLan = "/mnt/custom/Audio/russian/";
+		}else{
+		
+			kAudioPathLan = "/mnt/custom/Audio/english/";
 		}
 
 		//重新加载页面
@@ -555,6 +569,10 @@ void PageSysSet::ChangeLanguage(lv_event_t* e)
 		for(int i=0;i<2;i++){
 			lv_group_focus_next(GlobalData::Instance()->group);
 		}
+
+		#if AIPAIPAI_PROJECT_ARABIC
+		osd_data_init();
+		#endif
 	}
 }
 void PageSysSet::ChangeScreenList(lv_event_t* e)
@@ -652,6 +670,10 @@ void PageSysSet::OpenFormatPage()
 	lv_obj_align_to(list, label, LV_ALIGN_OUT_BOTTOM_MID, 0, size_h(10));
 
 	GlobalData::Instance()->opened_subpage_[0] = page;
+
+	#if 1
+	GlobalPage::Instance()->page_set()->Createfunction_bar(page,36,7,true,false);
+	#endif
 }
 
 void PageSysSet::OpenFormatTipWin()
@@ -739,7 +761,11 @@ void* PageSysSet::FormatSDThread(void* param)
 		GlobalData::Instance()->SDCard_write_speed_ = write_speed;
 		XMLogI("write_speed : %dKB/s", write_speed);
 	}
-
+  #if GPS_EN //写gps播放器下载链接
+	if(gps_insert_flag){ 
+		GPS_Player();
+	}
+  #endif
 	if (ret < 0) {
 		GlobalPage::Instance()->page_sys_set()->format_result_ = -1;
 		XMLogE("SD card format error");
@@ -859,6 +885,10 @@ void PageSysSet::OpenDefaultSetPage()
 	lv_obj_align_to(list, label, LV_ALIGN_OUT_BOTTOM_MID, 0, size_h(20));
 
 	GlobalData::Instance()->opened_subpage_[0] = page;
+
+#if 1
+	GlobalPage::Instance()->page_set()->Createfunction_bar(page,36,7,true,false);
+#endif
 }
 
 void PageSysSet::RestoreDefaultSetEvent(lv_event_t* e)
@@ -1127,7 +1157,11 @@ void PageSysSet::OpenEditionPage()
 
 	lv_obj_t* label = lv_create_label(page, subpage_width_,
 		GlobalData::Instance()->version().c_str(), LV_TEXT_ALIGN_CENTER, 0);
+	#if X2V50_PROJ_DEBUG
+	lv_obj_align(label, LV_ALIGN_CENTER, 0, size_h(0));
+	#else
 	lv_obj_align(label, LV_ALIGN_TOP_MID, 0, size_h(130));
+	#endif
 	lv_group_add_obj(GlobalData::Instance()->group, label);
 
 	GlobalData::Instance()->opened_subpage_[0] = page;
@@ -1568,12 +1602,40 @@ void PageSysSet::ChangeBootToneEvent(lv_event_t* e)
 		GlobalPage::Instance()->page_sys_set()->SetFocusedObjStyle(target);
 		
 		XM_CONFIG_VALUE cfg_value;
-		cfg_value.bool_value = user_data;
+		cfg_value.int_value = user_data;
 		int ret = GlobalData::Instance()->car_config()->SetValue(CFG_Operation_boot_Voice, cfg_value);
 		if (ret < 0) {
 			XMLogE("set config error, opr=CFG_Operation_boot_Voice");
 		}
+        if (cfg_value.int_value==Volume_Close) {
+			XM_Middleware_Sound_SetVolume(0);
+		} else if (cfg_value.int_value==Volume_Low) {
+			XM_Middleware_Sound_SetVolume(33);
+		} else if (cfg_value.int_value==Volume_Mid) {
+			XM_Middleware_Sound_SetVolume(66);
+		} else {
+			XM_Middleware_Sound_SetVolume(100);
+		}
+		GlobalPage::Instance()->page_main()->playsound_flag_ = cfg_value.int_value;
+		GlobalPage::Instance()->page_set()->ReturnPreMenu();
+	}
+}
 
+void PageSysSet::ChangeFatigueReminder(lv_event_t* e)
+{
+	lv_event_code_t code = lv_event_get_code(e);
+	if (code == LV_EVENT_CLICKED) {
+		int user_data = (int)lv_event_get_user_data(e);
+		lv_obj_t* target = lv_event_get_target(e);
+		GlobalPage::Instance()->page_sys_set()->SetFocusedObjStyle(target);
+		
+		XM_CONFIG_VALUE cfg_value;
+		cfg_value.int_value = user_data;
+		int ret = GlobalData::Instance()->car_config()->SetValue(CFG_Operation_Fatigue_reminder, cfg_value);
+		if (ret < 0) {
+			XMLogE("set config error, opr=CFG_Operation_Fatigue_reminder");
+		}
+		GlobalPage::Instance()->page_main()->Fatigue_reminder_value=cfg_value.int_value;
 		GlobalPage::Instance()->page_set()->ReturnPreMenu();
 	}
 }
@@ -1609,7 +1671,7 @@ void PageSysSet::OpenWifiSetPage()
 	lv_obj_t* label1 = lv_label_create(page);
 	lv_label_set_text(label1, text1);
 	lv_obj_align_to(label1, label, LV_ALIGN_OUT_BOTTOM_LEFT, 0, size_h(10));
-#if SEVEN_KEYS
+#if 0//SEVEN_KEYS //X2V50_PROJ_DEBUG
   if(!GlobalPage::Instance()->page_main()->touch_plan){
 	lv_obj_t* label2 = lv_label_create(page);
 	lv_label_set_text(label2, GetParsedString("Recording mode, down key to control WiFi switch"));
@@ -1680,4 +1742,151 @@ void PageSysSet::WifiEvent(lv_event_t* e)
 		}
       //  GlobalData::Instance()->car_config()->SetValue(CFG_Operation_WiFi, cfg_value);
 	}
+}
+void PageSysSet::OpenGpsInfoPage()
+{
+    if (GlobalData::Instance()->opened_subpage_[0]) return;
+    lv_obj_t* page = lv_create_page(lv_scr_act(), screen_width, screen_height - 4, lv_color_make(38, 38, 38), 0, 2,
+        lv_font_all, lv_color_white(), 0);
+    lv_obj_align(page, LV_ALIGN_TOP_MID, 0, size_h(0) + start_y);
+    lv_obj_add_style(page, &GlobalPage::Instance()->page_set()->subpage_style_, 0);
+    lv_obj_add_event_cb(page, DeletedEvent, LV_EVENT_DELETE, NULL);
+    lv_obj_add_event_cb(page, GlobalPage::Instance()->page_set()->CloseSubPage, LV_EVENT_ALL, (void*)Subpage_Edition);
+
+    static lv_point_t line_points[] = { {0, 80}, {200, 80} };
+    lv_create_line(page, 2, lv_color_make(255, 255, 255), 0, line_points, 2, 0);
+
+    // static lv_point_t line_points1[] = { {210, 0}, {210, 80} };
+    // lv_create_line(page, 2, lv_color_make(255, 255, 255), 0, line_points1, 2, 0);
+
+    static lv_point_t line_points2[] = { {200, 0}, {200, screen_height} };
+    lv_create_line(page, 2, lv_color_make(255, 255, 255), 0, line_points2, 2, 0);
+
+    static lv_point_t line_points3[] = { {200, 120}, {screen_width, 120} };
+    lv_create_line(page, 2, lv_color_make(255, 255, 255), 0, line_points3, 2, 0);
+
+    // static lv_point_t line_points4[] = { {420, 240}, {screen_width, 240} };
+    // lv_create_line(page, 2, lv_color_make(255, 255, 255), 0, line_points4, 2, 0);
+    for (int i = 0; i < 10; i++) {
+        gps_bar_graph[i] = lv_create_page(page, 15, 0, lv_color_make(0, 255, 0), 0, 0,
+            lv_font_all, lv_color_white(), 0);
+        lv_obj_set_size(gps_bar_graph[i], 15, 0);
+        lv_obj_align(gps_bar_graph[i], LV_ALIGN_BOTTOM_LEFT, size_w(5) + 19 * i, -size_h(20));
+        gps_labe_graph[i] = lv_label_create(page);
+        lv_label_set_text(gps_labe_graph[i], " ");
+        lv_obj_set_style_text_font(gps_labe_graph[i], &lv_font_montserrat_10, 0);
+        lv_obj_align_to(gps_labe_graph[i], gps_bar_graph[i], LV_ALIGN_BOTTOM_MID, size_w(0), size_h(15));
+    }
+
+    lv_obj_t* label = lv_create_label(page, size_w(130), GetParsedString("GPS status"), LV_TEXT_ALIGN_CENTER, 0);
+    gps_status_label = lv_create_label(page, size_w(100), " ", LV_TEXT_ALIGN_CENTER, 0);
+    lv_obj_align(label, LV_ALIGN_TOP_LEFT, size_w(5), size_h(10));
+    lv_obj_align_to(gps_status_label, label, LV_ALIGN_BOTTOM_MID, size_w(0), size_h(30));
+
+    // label = lv_create_label(page, size_w(210), GetParsedString("Altitude(m)"), LV_TEXT_ALIGN_CENTER, 0);
+    // Altitude_label= lv_create_label(page, size_w(210), " ", LV_TEXT_ALIGN_CENTER, 0);
+    // lv_obj_align(label, LV_ALIGN_TOP_LEFT, size_w(210), size_h(10));
+    // lv_obj_align_to(Altitude_label,label, LV_ALIGN_BOTTOM_MID, size_w(0), size_h(30));
+
+    // label = lv_create_label(page, size_w(210), GetParsedString("orientation(degree)"), LV_TEXT_ALIGN_CENTER, 0);
+    // orientation_label= lv_create_label(page, size_w(210), " ", LV_TEXT_ALIGN_CENTER, 0);
+    // lv_obj_align(label, LV_ALIGN_TOP_LEFT, size_w(420), size_h(10));
+    // lv_obj_align_to(orientation_label,label, LV_ALIGN_BOTTOM_MID, size_w(0), size_h(30));
+
+    longitude_label = lv_create_label(page, size_w(210), " ", LV_TEXT_ALIGN_CENTER, 0);
+    latitude_label = lv_create_label(page, size_w(210), " ", LV_TEXT_ALIGN_CENTER, 0);
+    lv_obj_set_style_text_font(longitude_label, &lv_font_montserrat_10, 0);
+    lv_obj_set_style_text_font(latitude_label, &lv_font_montserrat_10, 0);
+    lv_obj_align(longitude_label, LV_ALIGN_TOP_LEFT, size_w(150), size_h(20));
+    lv_obj_align_to(latitude_label, longitude_label, LV_ALIGN_BOTTOM_MID, size_w(2), size_h(20));
+
+    // label = lv_create_label(page, size_w(210), GetParsedString("speed"), LV_TEXT_ALIGN_CENTER, 0);
+    // gps_speed_label = lv_create_label(page, size_w(210), " ", LV_TEXT_ALIGN_CENTER, 0);
+    // lv_obj_align(label, LV_ALIGN_TOP_LEFT, size_w(420), size_h(170));
+    // lv_obj_align_to(gps_speed_label, label, LV_ALIGN_BOTTOM_MID, size_w(0), size_h(30));
+
+    label = lv_create_label(page, size_w(210), "UTC", LV_TEXT_ALIGN_CENTER, 0);
+    utc_label = lv_create_label(page, size_w(210), " ", LV_TEXT_ALIGN_CENTER, 0);
+    lv_obj_set_style_text_font(utc_label, &lv_font_montserrat_10, 0);
+    lv_obj_align(label, LV_ALIGN_TOP_LEFT, size_w(150), size_h(140));
+    lv_obj_align_to(utc_label, label, LV_ALIGN_BOTTOM_MID, size_w(0), size_h(20));
+
+    // label = lv_create_label(page, size_w(210), GetParsedString("visual"), LV_TEXT_ALIGN_CENTER, 0);
+    // visual_label = lv_create_label(page, size_w(40), " ", LV_TEXT_ALIGN_CENTER, 0);
+    // lv_obj_align(label, LV_ALIGN_TOP_LEFT, size_w(0), size_h(90));
+    // lv_obj_align_to(visual_label, label, LV_ALIGN_OUT_RIGHT_MID, -size_w(60), size_h(0));
+
+    // label = lv_create_label(page, size_w(210), GetParsedString("available"), LV_TEXT_ALIGN_CENTER, 0);
+    // available_label = lv_create_label(page, size_w(40), " ", LV_TEXT_ALIGN_CENTER, 0);
+    // lv_obj_align(label, LV_ALIGN_TOP_LEFT, size_w(200), size_h(90));
+    // lv_obj_align_to(available_label, label, LV_ALIGN_OUT_RIGHT_MID, -size_w(60), size_h(0));
+
+    if (!gps_infomation_timer_)
+        gps_infomation_timer_ = lv_timer_create(update_gps_infomation_ui, 500, NULL);
+    lv_group_add_obj(GlobalData::Instance()->group, page);
+    GlobalData::Instance()->opened_subpage_[0] = page;
+    gps_info_page_ = page;
+}
+
+#if OSD_SHOW_ADJUST
+extern int osd_time_ofs_y;
+#endif
+#include "mpp/MppMdl.h"
+#include "DemoDef.h"
+
+void PageSysSet::GpsWatermark(lv_event_t* e)
+{
+    lv_event_code_t code = lv_event_get_code(e);
+    if (code == LV_EVENT_CLICKED) {
+        int user_data = (int)lv_event_get_user_data(e);
+        lv_obj_t* target = lv_event_get_target(e);
+        GlobalPage::Instance()->page_sys_set()->SetFocusedObjStyle(target);
+
+        XM_CONFIG_VALUE cfg_value;
+        cfg_value.bool_value = user_data;
+        int ret = GlobalData::Instance()->car_config()->SetValue(CFG_Operation_GPS_Watermark, cfg_value);
+        if (ret < 0) {
+            XMLogE("set config error, opr=CFG_Operation_GPS_Watermark");
+        }
+		
+#if 0//OSD_SHOW_ADJUST
+		if(user_data){
+			
+			osd_time_ofs_y = OSD_TIME_ADJUST_Y;
+
+		}else{
+		
+			//clean_gps_osd_data(0);
+			osd_time_ofs_y = OSD_GPS_ADJUST_Y;
+		}
+		
+		//MppMdl::Instance()->EnableOsdTime(4,1, 128, 8192*(kSubStreamHeight-60-(kSubStreamHeight/360)*8)/kSubStreamHeight + osd_time_ofs_y);
+#endif
+		
+		if(cfg_value.bool_value){
+			
+		    GlobalData::Instance()->car_config()->SetValue(CFG_Operation_Date_Watermark, cfg_value);
+		}
+		
+		osd_data_init();
+
+        GlobalPage::Instance()->page_set()->ReturnPreMenu();
+    }
+}
+void PageSysSet::ChangeSpeedUnit(lv_event_t* e)
+{
+    lv_event_code_t code = lv_event_get_code(e);
+    if (code == LV_EVENT_CLICKED) {
+        int user_data = (int)lv_event_get_user_data(e);
+        lv_obj_t* target = lv_event_get_target(e);
+        GlobalPage::Instance()->page_sys_set()->SetFocusedObjStyle(target);
+
+        XM_CONFIG_VALUE cfg_value;
+        cfg_value.int_value = user_data;
+        int ret = GlobalData::Instance()->car_config()->SetValue(CFG_Operation_GPS_Unit, cfg_value);
+        if (ret < 0) {
+            XMLogE("set config error, opr=CFG_Operation_GPS_Unit");
+        }
+        GlobalPage::Instance()->page_set()->ReturnPreMenu();
+    }
 }

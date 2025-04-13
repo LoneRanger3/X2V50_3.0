@@ -29,6 +29,7 @@ public:
 	void RecordVoiceEnable(bool enable);
 	void ReturnPreMenu();
 	static void CloseSubPage(lv_event_t* e);
+	void Createfunction_bar(lv_obj_t* curr_page, lv_coord_t height, lv_coord_t y_ofs, bool ok_enable, bool delete_enable);
 private:
 	void CreatePage();
 	static void OpenSubpage(lv_event_t* e);
@@ -47,6 +48,7 @@ public:
 	lv_obj_t* cfg_label_[Subpage_Total];
 	lv_style_t subpage_style_;
 	lv_obj_t* menu_img_[Subpage_Total];
+	lv_obj_t* Settings_function_page_;
 };
 
 #endif // !__PAGESET_H__

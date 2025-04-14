@@ -538,9 +538,18 @@ void PageSysSet::ChangeLanguage(lv_event_t* e)
 		XM_CONFIG_VALUE cfg_value;
 		cfg_value.int_value = user_data;
 		set_language(cfg_value.int_value);
+		GlobalPage::Instance()->page_main()->language_value_ = cfg_value.int_value;
 		int ret = GlobalData::Instance()->car_config()->SetValue(CFG_Operation_Language, cfg_value);
 		if (ret < 0) {
 			XMLogE("set config error, opr=CFG_Operation_Language");
+		}
+
+		if(GlobalPage::Instance()->page_main()->language_value_ == Russian){
+			
+			kAudioPathLan = "/mnt/custom/Audio/russian/";
+		}else{
+		
+			kAudioPathLan = "/mnt/custom/Audio/english/";
 		}
 
 		//重新加载页面

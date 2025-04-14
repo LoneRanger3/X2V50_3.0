@@ -74,6 +74,10 @@ public:
 	int WifiEnable(bool enable);
 	void AppMenuValue(void);
 	void Remaining_update_time();
+    void Function_bar(bool flag);
+	void HandOpenTipBox(void);
+	void PlaySdCardStatus(void);
+	
 private:
 	void CreatePage();
 	void CompactRecord();
@@ -98,6 +102,8 @@ public:
 	lv_obj_t* wifi_tip_win_;
 	lv_obj_t* record_resolution_label_;
 	lv_obj_t* main_page_;
+	lv_obj_t* Function_page_;
+	lv_obj_t* Settings_function_page_;
 	lv_obj_t* SD_img_;
 	lv_obj_t* mode_label_;
 	lv_obj_t* logo_label_;

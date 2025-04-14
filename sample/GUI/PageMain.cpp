@@ -45,6 +45,9 @@ void PageMain::OpenPage()
 	CreatePage();
 }
 
+#include "cr_sdio.h"
+extern char* kAudioPath;
+extern char* kAudioPathLan;
 void PageMain::CreatePage()
 {
 	main_page_ = lv_create_page(lv_scr_act(), screen_width, screen_height, lv_color_black(), 0, 0,
@@ -348,14 +351,27 @@ void PageMain::BtnEvent(lv_event_t* e)
 			page_main->LockCurrentFile();
 		}
 		else if (user_data == RecordPageBtnFlag_Wifi) {
-           page_main->WifiEnable(!page_main->wifi_enable_);
+			
+    		page_main->WifiEnable(!page_main->wifi_enable_);
+		    if(GlobalPage::Instance()->page_main()->playsound_flag_){
+				
+			    std::string sound_file = kAudioPathLan;
+                if(page_main->wifi_enable_){
+
+            		sound_file += "WiFi is turned on.pcm";
+                }else{
+
+    				sound_file += "WiFi is turned off.pcm";
+                }
+				MppMdl::Instance()->PlaySound(sound_file.c_str());
+			}
 		}
 	}
 }
 
 int PageMain::WifiEnable(bool enable)
 {
-	XMLogI("WifiEnable enable = %d", enable);
+	XMLogI("WifiEnable enable = %d \r\n", enable);
 	if (wifi_enable_ == enable) {
 		XMLogE("WifiEnable error");
 		return -1;
@@ -1426,6 +1442,19 @@ void PageMain::LockCurrentFile()
 	}
 }
 
+void PageMain::PlaySdCardStatus()
+{
+	std::string sound_file = kAudioPathLan;
+	// 30秒循环重新计时
+	GlobalPage::Instance()->page_main()->audio_flag_ = 1;
+
+	if (g_sd_status == XM_SD_NOEXIST) {
+		
+		sound_file += "Please insert the SD card_16k.pcm";
+		MppMdl::Instance()->PlaySound(sound_file.c_str());
+	}
+}
+
 void PageMain::RecordPicModeKeypad(int key)
 {
 	if (key == KEYMAP_OK) {
@@ -2271,10 +2300,11 @@ void PageMain::Voice_prompts(const char* file_name)
 	XM_CONFIG_VALUE cfg_value;
 	 cfg_value.int_value = SimpChinese;
 	 GlobalData::Instance()->car_config()->GetValue(CFG_Operation_Language, cfg_value);
-	if( cfg_value.int_value == English){
+	//if( cfg_value.int_value == English)
+	  {
 		 GlobalData::Instance()->car_config()->GetValue(CFG_Operation_boot_Voice, cfg_value);
-        if(cfg_value.bool_value){
-		std::string sound_file = kAudioPath;
+        if(cfg_value.int_value){
+		std::string sound_file = kAudioPathLan;
 		sound_file += file_name;
 		MppMdl::Instance()->PlaySound(sound_file.c_str());
 	  }

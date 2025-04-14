@@ -565,6 +565,15 @@ static uint32_t keypad_get_key(void)
     }
 
     //录像和拍照模式按键操作
+    GlobalPage::Instance()->page_main()->Function_bar_cnt = 0;
+
+	if(GlobalPage::Instance()->page_main()->Handtip_box_){
+		
+		XMLogW("[HandOpenTipBox] in keypad_get_key key = %d \r\n", key);
+		lv_obj_del(GlobalPage::Instance()->page_main()->Handtip_box_);
+	    GlobalPage::Instance()->page_main()->Handtip_box_ = NULL;
+     	return 0;
+	}
     if (key == KEYMAP_UP) {
         if (!lv_obj_has_flag(GlobalPage::Instance()->page_main()->main_page_, LV_OBJ_FLAG_HIDDEN)) {
             GlobalPage::Instance()->page_sys_set()->SwitchCamera(KEYMAP_UP);

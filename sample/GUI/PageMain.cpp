@@ -738,6 +738,17 @@ void PageMain::UpdateTime(lv_timer_t* timer)
 					}
 				#endif
 				
+				#if 1
+				//30秒循环播报SD卡状态语音
+				if(GlobalPage::Instance()->page_main()->Handtip_box_){
+					
+    				GlobalPage::Instance()->page_main()->audio_flag_++;
+    				if (GlobalPage::Instance()->page_main()->audio_flag_ % SD_CARD_PLAY_INTERVAL_TIME == 0)
+    				{
+    					GlobalPage::Instance()->page_main()->PlaySdCardStatus();
+    				}
+    				}
+				#endif
 			}
 
 			int date = current_time->tm_year + current_time->tm_mon + current_time->tm_mday;
@@ -846,6 +857,33 @@ void PageMain::CloseTipBox(lv_timer_t* timer)
 	lv_obj_t* user_data = (lv_obj_t*)timer->user_data;
 	lv_obj_del(user_data);
 	lv_timer_del(timer);
+}
+
+void PageMain::HandOpenTipBox(void)
+{
+	XMLogW("[HandOpenTipBox] g_sd_status = %d \r\n", g_sd_status);
+	//if (g_sd_status != XM_SD_NOEXIST || record_time_label_ != NULL record_timer_ != NULL){
+	if (g_sd_status != XM_SD_NOEXIST){
+		
+		Handtip_box_ = NULL;
+        return;
+	}
+
+	RED_ON;
+	GREEN_OFF;
+
+	Handtip_box_ = lv_create_page(lv_scr_act(), size_w(220), size_h(130),
+		lv_color_make(99, 99, 99), 0, 2, lv_font_all, lv_color_white(), 0);
+	lv_obj_align(Handtip_box_, LV_ALIGN_CENTER, 0, 0);
+
+	lv_obj_set_style_border_color(Handtip_box_, lv_color_make(99, 99, 99), 0);
+	lv_obj_set_style_radius(Handtip_box_, 10, 0);
+
+	lv_obj_t* label = lv_create_image(Handtip_box_, size_w(28), size_w(28), image_path"msgwarn1.png");
+		lv_obj_align(label, LV_ALIGN_TOP_MID, 0, size_h(6));
+
+	label = lv_create_label(Handtip_box_, size_w(220), GetParsedString("Please insert SD card"), LV_TEXT_ALIGN_CENTER, 0);
+	lv_obj_align(label, LV_ALIGN_CENTER, 0, size_h(14));
 }
 
 void PageMain::WiFi_switch(lv_event_t* e)

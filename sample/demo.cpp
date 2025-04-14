@@ -384,6 +384,13 @@ int ProcessEvent(long handle, XMEventType event_type, const std::string& msg, in
 			if (GlobalPage::Instance()->page_usb()->user_selected_usb_mode_ == USB_MODE_MASS_STORAGE) {
 				GlobalPage::Instance()->page_usb()->SetUsbFunc(USB_MODE_MASS_STORAGE);
 			}
+
+			if(GlobalPage::Instance()->page_main()->Handtip_box_){
+				
+			    lv_obj_del(GlobalPage::Instance()->page_main()->Handtip_box_);
+				GlobalPage::Instance()->page_main()->Handtip_box_ = NULL;
+			}
+			
 		#if 1	
 			if(g_sd_status == XM_SD_NORMAL){	
 				int write_speed = 0;				
@@ -1496,6 +1503,10 @@ void* timer_hander_thread(void* args)
 			record_start_dealt = true;
 			GlobalPage::Instance()->page_main()->SDCardImg();
 			GlobalPage::Instance()->page_main()->RecordOnStartup();
+			
+			XMLogW("[HandOpenTipBox] after RecordOnStartup, g_sd_status = %d \r\n", g_sd_status);
+			GlobalPage::Instance()->page_main()->audio_flag_ = SD_CARD_PLAY_INTERVAL_TIME -2;
+			GlobalPage::Instance()->page_main()->HandOpenTipBox();
 		}
 	}
 }

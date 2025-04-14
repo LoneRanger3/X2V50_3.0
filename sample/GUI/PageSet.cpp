@@ -49,7 +49,7 @@ void SetMenuStyle(lv_obj_t* list, lv_coord_t width, lv_coord_t height)
 
 void PageSet::Createfunction_bar(lv_obj_t* curr_page, lv_coord_t height, lv_coord_t y_ofs, bool ok_enable, bool delete_enable)
 {
-#if 1
+#if 0
 	lv_obj_t* Settings_function_page_ = lv_create_page(curr_page, screen_width, size_h(height),
 		lv_color_make(68, 68, 68), 0, 0, lv_font_all, lv_color_white(), 0);//46 36 30
 	lv_obj_align(Settings_function_page_, LV_ALIGN_BOTTOM_MID, 0, 0);

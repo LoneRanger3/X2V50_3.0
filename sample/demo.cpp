@@ -32,6 +32,7 @@
 #include "CommDef.h"
 #include "DemoDef.h"
 #include "osd_user.h"
+#include "gps.h"
 extern "C" {
 #include "cr_vo.h"
 }
@@ -121,7 +122,7 @@ int SetEncodeParam(int channel, PAYLOAD_TYPE_E video_codec_type, int width, int 
 	media_info.width = width;
 	media_info.height = height;
 	media_info.bit_rate = bit_rate;
-	media_info.frame_rate = frame_rate;		
+	media_info.frame_rate = frame_rate;
 	media_info.audio_codec = PT_PCMA;
 	media_info.audio_channel = 1;
 	media_info.bit_per_sample = 16;
@@ -212,9 +213,9 @@ int ProcessGetParam(char* res_str)
 	PackParamInfo("voice_control", voice_control_items_array, 2, voice_control_index_array, info);
   #endif
   
-	const char* keytone_items_array[2] = { "on", "off" };
-	const int keytone_index_array[2] = { 1, 0 };
-	PackParamInfo("key_tone", keytone_items_array, 2, keytone_index_array, info);
+	const char* keytone_items_array[4] = {"off","low", "middle" ,"high"};
+	const int keytone_index_array[4] = { 0,1,2,3 };
+	PackParamInfo("speaker", keytone_items_array, 4, keytone_index_array, info);
 #if COMPACT_RECORD_EN
    //缩时录影帧率
     const char* timelapse_rate_items_array[4] = { "off", "1fps", "2fps", "5fps" };
@@ -281,7 +282,7 @@ void OnMWEventCallBack(long handle, XMEventType event_type, const char* msg, int
 	}
 
 	//app来获取设备属性，可以异步处理，直接返回，等设备切换到预览模式再回复
-	if (XM_EVENT_APP_GET_DEVATTR == event_type) { 
+	if (XM_EVENT_APP_GET_DEVATTR == event_type) {
 		ProcessGetDevAttr();
 		return;
 	}
@@ -314,7 +315,28 @@ void OnMWEventCallBack(long handle, XMEventType event_type, const char* msg, int
 		PeripheryManager::Instance()->DecodeEnable(param);
 		return;
 	}
-
+#if GPS_EN	
+    if (XM_EVENT_RECORDFILE_START == event_type) {
+		XMLogI("XM_EVENT_RECORD_START, channel=%d", handle);
+		if(handle==0){
+		write_start=1;
+		}else if(handle==1){
+		write_startback=1;
+		}
+		return;
+	}
+	if (XM_EVENT_RECORDFILE_END == event_type) {
+        XMLogI("XM_EVENT_RECORDFILE_END, channel=%d, file name=%s", handle, msg); //msg.c_str()
+			if(handle==0){
+				write_start=0;
+				get_gps_data(msg);
+			}else if(handle==1){
+				write_startback=0;
+				get_gps_back_data(msg);
+			}	
+		return;
+    }
+#endif
 	MWEventInfo event_info;
 	event_info.handle = handle;
 	event_info.event_type = event_type;
@@ -347,11 +369,13 @@ void OnMWEventCallBack(long handle, XMEventType event_type, const char* msg, int
 			GlobalPage::Instance()->page_main()->OpenScreen();
 		}
 
+		#if 0
 		if (event_type != XM_EVENT_KEYWORD_ZHUAPAIZHAOPIAN) {
 			std::string sound_file = kAudioPath;
 			sound_file += "haode_16k.pcm";
 			MppMdl::Instance()->PlaySound(sound_file.c_str());
 		}
+		#endif
 	}
 }
 
@@ -361,6 +385,9 @@ void OnMWLogCallback(char* log_buf, int log_len, int64_t user)
 	LogFileManager::Instance()->get_log_data(log_buf,log_len,user);
 }
 
+#if OSD_SHOW_ADJUST
+extern int osd_time_ofs_y;
+#endif
 int ProcessEvent(long handle, XMEventType event_type, const std::string& msg, int param) 
 {
  	switch (event_type)
@@ -384,6 +411,13 @@ int ProcessEvent(long handle, XMEventType event_type, const std::string& msg, in
 			if (GlobalPage::Instance()->page_usb()->user_selected_usb_mode_ == USB_MODE_MASS_STORAGE) {
 				GlobalPage::Instance()->page_usb()->SetUsbFunc(USB_MODE_MASS_STORAGE);
 			}
+
+			if(GlobalPage::Instance()->page_main()->Handtip_box_){
+				
+			    lv_obj_del(GlobalPage::Instance()->page_main()->Handtip_box_);
+				GlobalPage::Instance()->page_main()->Handtip_box_ = NULL;
+			}
+			
 		#if 1	
 			if(g_sd_status == XM_SD_NORMAL){	
 				int write_speed = 0;				
@@ -464,6 +498,16 @@ int ProcessEvent(long handle, XMEventType event_type, const std::string& msg, in
 				GlobalPage::Instance()->page_main()->ShutDown(ShutDownMode_Acc, true, true);
 				break;
 			}
+
+#if 1//
+			//卡修复
+			XM_CONFIG_VALUE get_cfg_value;
+			GlobalData::Instance()->car_config()->GetValue(CFG_Operation_NEED_REPAIR_SDCARD, get_cfg_value);
+			
+			get_cfg_value.bool_value = true;
+			GlobalData::Instance()->car_config()->SetValue(CFG_Operation_NEED_REPAIR_SDCARD, get_cfg_value);
+#endif
+
 
 			GlobalPage::Instance()->page_main()->CloseRecord();
 			GlobalPage::Instance()->page_main()->OpenTipBox("Please insert SD card");
@@ -831,6 +875,20 @@ int ProcessEvent(long handle, XMEventType event_type, const std::string& msg, in
 			XMLogI("XM_EVENT_RECORDFILE_END, channel=%d, file name=%s", handle, msg.c_str());
 		}
 		break;
+	case XM_EVENT_GPS_TIME:
+		XMLogI("XM_EVENT_GPS_TIME, param=%d", param);
+		#if GPS_EN
+			if(1){
+				if(GlobalPage::Instance()->page_main()->record_time_label_){
+					GlobalPage::Instance()->page_main()->CloseRecord();
+					update_hardware_time(gps.time);
+					GlobalPage::Instance()->page_main()->StartRecord();
+				}else{
+					update_hardware_time(gps.time);
+				}
+			}
+		#endif	
+		break;
 	case XM_EVENT_RECORD_SOUND_ENABLE:
 		{
 			XMLogI("XM_EVENT_RECORD_SOUND_ENABLE");
@@ -1036,13 +1094,39 @@ int ProcessEvent(long handle, XMEventType event_type, const std::string& msg, in
 		{
 			XMLogI("XM_EVENT_OSD_ENABLE, param = %d", param);
 			XM_CONFIG_VALUE cfg_value;
+			int ret = 0;
 			cfg_value.bool_value = param == 1 ? true : false;
 			// XM_Middleware_Encode_EnableOsdTime(cfg_value.bool_value, osd_x, osd_y);
-			int ret = GlobalData::Instance()->car_config()->SetValue(CFG_Operation_Date_Watermark, cfg_value);
+			ret = GlobalData::Instance()->car_config()->SetValue(CFG_Operation_Date_Watermark, cfg_value);
+
+            #if 1//OSD_SHOW_ADJUST
+			if(!cfg_value.bool_value){
+				
+				cfg_value.bool_value = 0;
+				GlobalData::Instance()->car_config()->SetValue(CFG_Operation_GPS_Watermark, cfg_value);
+			}
+            #endif
+			
 			if (ret < 0) {
 				XMLogE("set config error, opr=CFG_Operation_Date_Watermark");
 			}
 			osd_data_init();
+
+            #if OSD_SHOW_ADJUST
+			if(!param){//关闭时间水印
+			
+				clean_gps_osd_data(0);
+			}else{
+			
+			    GlobalData::Instance()->car_config()->GetValue(CFG_Operation_GPS_Watermark, cfg_value);
+				if(!cfg_value.bool_value){
+					//
+    				osd_time_ofs_y = OSD_GPS_ADJUST_Y;
+    				clean_gps_osd_data(0);
+    				MppMdl::Instance()->EnableOsdTime(4,1, 128, 8192*(kSubStreamHeight-60-(kSubStreamHeight/360)*8)/kSubStreamHeight + osd_time_ofs_y);
+				}
+			}
+            #endif
 		}
 		break;
 	case XM_EVENT_CHANGE_WIFI_PARAM:
@@ -1074,6 +1158,7 @@ int ProcessEvent(long handle, XMEventType event_type, const std::string& msg, in
 		{
 			XMLogI("XM_EVENT_KEYTONE_ENABLE, param = %d", param);
 			XM_CONFIG_VALUE cfg_value;
+		#if 0
 			cfg_value.bool_value = param == 1 ? true : false;
 			int ret = GlobalData::Instance()->car_config()->SetValue(CFG_Operation_Key_Voice, cfg_value);
 			if (ret < 0) {
@@ -1081,6 +1166,14 @@ int ProcessEvent(long handle, XMEventType event_type, const std::string& msg, in
 			}
 
 			GlobalData::Instance()->key_tone_ = cfg_value.bool_value;
+		#else
+		   cfg_value.int_value = param;
+		   int ret = GlobalData::Instance()->car_config()->SetValue(CFG_Operation_boot_Voice, cfg_value);
+			if (ret < 0) {
+				XMLogE("set config error, opr=CFG_Operation_boot_Voice");
+			}
+			GlobalPage::Instance()->page_main()->playsound_flag_ = cfg_value.int_value;
+		#endif
 		}
 		break;
 	case XM_EVENT_PARK_RECORD_TIME:
@@ -1416,6 +1509,17 @@ int OnUIEventCallback(XMUIEventType ui_event_type, XMUIEventInParam* in_param, X
 // Retrieve second info
 #define OS_SECOND   ((__TIME__ [6] - '0') * 10 + (__TIME__ [7] - '0'))
 
+void get_current_time(char* str)
+{
+	static char date_buf[22] = {0};//19
+	
+	memset(date_buf, 0, 22);
+	sprintf(date_buf, "  %04d.%02d.%02d %02d:%02d:%02d", 
+		OS_YEAR, OS_MONTH, OS_DAY, OS_HOUR, OS_MINUTE, OS_SECOND);
+
+	memcpy(str, date_buf, 22);
+}
+
 bool sdcard_checked = false;
 bool record_start_dealt = false;
 
@@ -1496,6 +1600,10 @@ void* timer_hander_thread(void* args)
 			record_start_dealt = true;
 			GlobalPage::Instance()->page_main()->SDCardImg();
 			GlobalPage::Instance()->page_main()->RecordOnStartup();
+			
+			XMLogW("[HandOpenTipBox] after RecordOnStartup, g_sd_status = %d \r\n", g_sd_status);
+			GlobalPage::Instance()->page_main()->audio_flag_ = SD_CARD_PLAY_INTERVAL_TIME -2;
+			GlobalPage::Instance()->page_main()->HandOpenTipBox();
 		}
 	}
 }
@@ -1646,11 +1754,11 @@ int main(int argc, char *argv[ ])
 		//version += "00-" ;//VSP，定义00为通用
 		version += XM_Middleware_GetVersion(); //sdk版本号
 		char date_version[32] = {0};
-		#if 0
+		#if 1
 		sprintf(date_version, "-%04d%02d%02d-%02d:%02d:%02d", 
 			OS_YEAR, OS_MONTH, OS_DAY, OS_HOUR, OS_MINUTE, OS_SECOND);
 		#else
-		 sprintf(date_version, "-20250218");
+		 sprintf(date_version, "-20250214");
 		#endif	
 		version += date_version;
 		GlobalData::Instance()->set_version(version);
@@ -1673,10 +1781,20 @@ int main(int argc, char *argv[ ])
 			//播放开机音频
         XM_CONFIG_VALUE cfg_value;
 		int ret = GlobalData::Instance()->car_config()->GetValue(CFG_Operation_boot_Voice, cfg_value);
-		int PlaySound_flag=cfg_value.bool_value;
-        if(ret>=0 && cfg_value.bool_value){
+		if (cfg_value.int_value==Volume_Close) {
+			XM_Middleware_Sound_SetVolume(0);
+		} else if (cfg_value.int_value==Volume_Low) {
+			XM_Middleware_Sound_SetVolume(33);
+		} else if (cfg_value.int_value==Volume_Mid) {
+			XM_Middleware_Sound_SetVolume(66);
+		} else {
+			XM_Middleware_Sound_SetVolume(100);
+		}
+		int PlaySound_flag=cfg_value.int_value;
+        if(ret>=0 && cfg_value.int_value){
 		std::string sound_file = kAudioPath;
 		sound_file += "kaiji_16k.pcm";
+		GlobalPage::Instance()->page_main()->playsound_flag_ = cfg_value.int_value;
 		MppMdl::Instance()->PlaySound(sound_file.c_str());
 		}
 		cfg_value.bool_value = false;
@@ -1822,6 +1940,11 @@ int main(int argc, char *argv[ ])
 			return XM_SUCCESS;
 		}
 		else {
+
+    		cfg_value.int_value = English;
+    		GlobalData::Instance()->car_config()->GetValue(CFG_Operation_Language, cfg_value);
+    		GlobalPage::Instance()->page_main()->language_value_ = cfg_value.int_value;
+		
 			osd_data_init();
 			//Adjust_Screen_Effect();
 			//设置UI界面操作事件回调函数，ui界面中开始存储、停止存储、查询查询、点播等操作，可以通过GlobalData::Instance()->ui_event_cb_回调出来
@@ -1863,6 +1986,10 @@ int main(int argc, char *argv[ ])
 
 		lcd_vo_param vo_param = {0};
 		//LIBCR_VO_SetParam(&vo_param);
+		#if GPS_EN
+		//串口GPS外设调用	
+			UartGpsThreadStart();
+		#endif 
 	}
 	//子进程升级
 	else if (argc == 2) {

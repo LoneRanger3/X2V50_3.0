@@ -1,4 +1,4 @@
-#include "global_data.h"
+﻿#include "global_data.h"
 #include "CommDef.h"
 const char* kTFCardPath = "/mnt/tfcard";
 const char* kUDiskPath = "/mnt/usb";
@@ -29,8 +29,8 @@ extern lv_font_t lv_font_Arabic_18;
   & lv_font_europe_20,
   & lv_font_europe_20,
   & lv_font_europe_20,
-  & lv_font_europe_20
-  //&lv_font_Arabic_18
+  & lv_font_europe_20,
+  &lv_font_Arabic_18
 };
 lv_font_t* lv_font_all= NULL;
 extern "C"

@@ -12,16 +12,16 @@
 //4K:3840x2144
 //1080P:1920x1080
 //720P:1280x720
-#define LVGL_ROATE_MODE//软件处理lvgl旋转
+//#define LVGL_ROATE_MODE//软件处理lvgl旋转
 #define VOICE_CONTROL_EN    0    //0-屏蔽声控，注意默认菜单配置参数要关闭                  1-添加声控  
 #define COMPACT_RECORD_EN   1    //0去掉缩时录影功能，注意默认菜单配置参数要关闭            1-添加缩时录影功能
 #define G_SENSOR_EN         1    //0去掉重力功能 ，注意默认菜单配置参数要关闭               1-添加重力功能
-#define GPS_EN              0    //0不支持GPS               1-支持GPS功能
+#define GPS_EN              1    //0不支持GPS               1-支持GPS功能
 #define OSD_SHOW_ADJUST     1    //搜不到gps时间水印下移，0关闭，1开启
 #define X2V50_PROJ_DEBUG    1 
 #define X2V50_2_PRODUCT_TEST    0    //生产测试(1.录像页面显示wifi名称密码。2.gsensor灵敏度打开。3.WiFi默认打开。4.gps模拟关闭)
 #define SD_CARD_PLAY_INTERVAL_TIME 30  //SD卡播报间隔
-#define AIPAIPAI_PROJECT_ARABIC 1  //爱拍拍阿拉伯地区定制
+#define AIPAIPAI_PROJECT_ARABIC 0  //爱拍拍阿拉伯地区定制
 
 #if AIPAIPAI_PROJECT_ARABIC
 #define COMPACT_RECORD_EN   0   //爱拍拍阿拉伯地区不开缩时录影，只开停车监控
@@ -566,6 +566,16 @@ const struct menu_table sys_menu_config_table[] = {
      {Switchoff, Switchon},    //此菜单实际生效的值，默认选项值必定为其中之一
       2,       //二级菜单个数
      CFG_Operation_Key_Voice,
+  },
+    //时间水印
+  {
+     Subpage_Watermark,                       //菜单列表名
+     {image"key_tone_off.png",image"key_tone_off-.png"},            //一级菜单图片路径
+     "Date watermark",     //一级菜单列表文案
+     {"Close",	"Open"},//二级菜单列表显示的文案
+     {Switchoff, Switchon},    //此菜单实际生效的值，默认选项值必定为其中之一
+      2,       //二级菜单个数
+      CFG_Operation_Date_Watermark,
   },
   //疲劳驾驶
   {

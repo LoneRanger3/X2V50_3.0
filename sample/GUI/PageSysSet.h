@@ -44,6 +44,7 @@ public:
 	void OpenFormatTipWin();
 	void OpenWifiSetPage();
     void ChangeLanguage(lv_event_t* e);
+    void ChangeFatigueReminder(lv_event_t* e);
 	int setSystemTime(int year, int month, int day, int hour, int min, int sec);
 	int SystemTimeToRtcTimeSet(void);
 private:

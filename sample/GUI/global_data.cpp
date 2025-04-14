@@ -2,7 +2,8 @@
 #include "CommDef.h"
 const char* kTFCardPath = "/mnt/tfcard";
 const char* kUDiskPath = "/mnt/usb";
-const char* kAudioPath = "/mnt/custom/Audio/";
+char* kAudioPath = "/mnt/custom/Audio/";
+char* kAudioPathLan = "/mnt/custom/Audio/english/";
 const char* kUpdateFileName = "/home/netall_XM650V200_CAR_X2V50_3.bin";
 const char* kSysTime = "/mnt/mtd/Config/sys_time";
 const int k3KHeight = 1800;

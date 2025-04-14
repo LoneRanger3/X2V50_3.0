@@ -1578,6 +1578,25 @@ void PageSysSet::ChangeBootToneEvent(lv_event_t* e)
 	}
 }
 
+void PageSysSet::ChangeFatigueReminder(lv_event_t* e)
+{
+	lv_event_code_t code = lv_event_get_code(e);
+	if (code == LV_EVENT_CLICKED) {
+		int user_data = (int)lv_event_get_user_data(e);
+		lv_obj_t* target = lv_event_get_target(e);
+		GlobalPage::Instance()->page_sys_set()->SetFocusedObjStyle(target);
+		
+		XM_CONFIG_VALUE cfg_value;
+		cfg_value.int_value = user_data;
+		int ret = GlobalData::Instance()->car_config()->SetValue(CFG_Operation_Fatigue_reminder, cfg_value);
+		if (ret < 0) {
+			XMLogE("set config error, opr=CFG_Operation_Fatigue_reminder");
+		}
+		GlobalPage::Instance()->page_main()->Fatigue_reminder_value=cfg_value.int_value;
+		GlobalPage::Instance()->page_set()->ReturnPreMenu();
+	}
+}
+
 void PageSysSet::OpenWifiSetPage()
 {
 	lv_obj_t* page = lv_obj_create(lv_scr_act());

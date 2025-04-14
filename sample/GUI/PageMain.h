@@ -141,6 +141,15 @@ public:
 	lv_obj_t* wifi_password_label_;
 	bool wifi_prepared_;
 	lv_obj_t* reverse_line_img_;
+	int Fatigue_reminder_cnt;
+	int Fatigue_reminder_value;
+	int Function_bar_cnt;
+    bool Function_bar_flag;
+	lv_obj_t* Handtip_box_;
+	int audio_flag_;
+	int language_value_;
+	int playsound_flag_;
+	
 private:
 	lv_obj_t* time_label_;
 	lv_obj_t* date_label_;

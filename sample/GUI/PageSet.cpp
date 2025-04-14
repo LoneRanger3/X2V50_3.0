@@ -292,6 +292,8 @@ void PageSet::OpenSubpage_Function(lv_event_t* e)
           break;
      case Subpage_KeyTone:
          page_sys_set->ChangeKeyToneEvent(e);
+     case Subpage_Fatigue_reminder:
+	     page_sys_set->ChangeFatigueReminder(e);
           break;
      case Subpage_BootTone:
          page_sys_set->ChangeBootToneEvent(e);

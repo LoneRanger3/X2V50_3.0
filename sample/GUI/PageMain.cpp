@@ -224,7 +224,16 @@ void PageMain::CreatePage()
 	lv_obj_add_event_cb(wifi_img_, BtnEvent, LV_EVENT_ALL, (void*)RecordPageBtnFlag_Wifi);
 	lv_obj_set_ext_click_area(wifi_img_, 20);
 	//lv_obj_add_flag(wifi_img_, LV_OBJ_FLAG_HIDDEN);
-
+	cfg_value.int_value = English;
+	GlobalData::Instance()->car_config()->GetValue(CFG_Operation_Language, cfg_value);
+	GlobalPage::Instance()->page_main()->language_value_ = cfg_value.int_value;
+    if(GlobalPage::Instance()->page_main()->language_value_ == Russian){
+		
+		kAudioPathLan = "/mnt/custom/Audio/russian/";
+	}else{
+	
+    	kAudioPathLan = "/mnt/custom/Audio/english/";
+	}
 	//录像界面水印
 	// x2_logo_img_ = lv_img_create(main_page_);
 	// lv_img_set_src(x2_logo_img_, image_path"Safe_cam.png");
@@ -247,7 +256,11 @@ void PageMain::RecordOnStartup()
 				lv_obj_clear_flag(lock_png_, LV_OBJ_FLAG_HIDDEN);
 				XM_Middleware_Storage_CollisionRecord(-1);
 				lock_current_recording_file_ = true;
-				Voice_prompts("Video locked_16k.pcm");
+				if(GlobalPage::Instance()->page_main()->language_value_ != Russian){
+					
+				    Voice_prompts("Video locked_16k.pcm");
+				}
+				
 				StartRecord();
 				RED_ON;
 				if (record_label_) {
@@ -679,6 +692,36 @@ void PageMain::UpdateTime(lv_timer_t* timer)
 				object->pre_time_ = time;
 				lv_label_set_text_fmt(object->time_label_, "%02d:%02d:%02d",
 					current_time->tm_hour, current_time->tm_min, current_time->tm_sec);
+				
+				#if 1//疲劳提醒	
+					if(GlobalData::Instance()->UI_mode_== UIMode_Videotape && object->Fatigue_reminder_value){
+						object->Fatigue_reminder_cnt++;
+						if (object->Fatigue_reminder_cnt > object->Fatigue_reminder_value*60*60) {
+							object->Fatigue_reminder_cnt = 0;
+
+						    std::string sound_file;
+						    if(GlobalPage::Instance()->page_main()->language_value_ == Russian){
+								
+								sound_file = kAudioPath;
+								sound_file += "dididi.pcm";
+							}else{
+							    
+								sound_file = kAudioPathLan;
+								sound_file += "Fatigue driving, please park nearby and rest.pcm";
+							}
+							
+		                    MppMdl::Instance()->PlaySound(sound_file.c_str());
+							if (object->Fatigue_reminder_value==1){
+								object->OpenTipBox("You have been driving for 1 hour, please pay attention to rest");
+							} else if (object->Fatigue_reminder_value==2){
+								object->OpenTipBox("You have been driving for 2 hours, please pay attention to rest");
+							}else if (object->Fatigue_reminder_value==3){
+								object->OpenTipBox("You have been driving for 3 hours, please pay attention to rest");
+							}
+						}
+					}
+				#endif
+				
 			}
 
 			int date = current_time->tm_year + current_time->tm_mon + current_time->tm_mday;
@@ -1359,7 +1402,11 @@ void PageMain::LockCurrentFile()
 			XM_Middleware_Storage_LockCurrentFile(XM_STORAGE_SDCard_0, Direction_Behind, true);
 			//OpenTipBox("The current file is locked");
 			RED_ON;
-			Voice_prompts("Video locked_16k.pcm");
+			
+			if(GlobalPage::Instance()->page_main()->language_value_ != Russian){
+				
+			    Voice_prompts("Video locked_16k.pcm");
+			}
 		}
 	}
 	else {
@@ -1518,8 +1565,15 @@ void PageMain::CheckSDStatus(bool checked_speed, bool need_speed_tip, bool need_
 		OpenTipBox("Memory card is not read-write, please format the memory card");
 	}
 	else if (g_sd_status == XM_SD_NOSPACE) {
-		if(nospace_tip)
+		if(nospace_tip){
+			
 			OpenTipBox("SD card space is insufficient");
+			//if(GlobalPage::Instance()->page_main()->language_value_ == Russian)
+			{
+				
+			    Voice_prompts("SD card is full.pcm");
+			}
+		}
 	}
 	else {
 		OpenTipBox("Please insert SD card");

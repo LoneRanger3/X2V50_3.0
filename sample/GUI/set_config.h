@@ -60,7 +60,18 @@ enum XM_CONFIG_VALUE_TYPE
 	CFG_Operation_Value_Bool,
 	CFG_Operation_Value_Float,
 };
-
+enum Volume
+{
+	Volume_Close,
+	Volume_Low,
+	Volume_Mid,
+    Volume_High,
+};
+enum SpeeduUnit
+{
+    SpeeduUnit_Km = 0, //公里/小时
+    SpeeduUnit_Mile,  //英里/小时
+};
 enum XM_CONFIG_OPERATION
 {
 	//系统设置
@@ -90,6 +101,7 @@ enum XM_CONFIG_OPERATION
 	CFG_Operation_Camera,
 	CFG_Operation_Date_Watermark,
     CFG_Operation_WiFi,
+    CFG_Operation_Fatigue_reminder, //疲劳提醒
 	CFG_Operation_NEED_REPAIR_SDCARD,	//需要fsck修复sd卡
     CFG_Operation_GAMMA_DELTA,
     CFG_Operation_NULL,
@@ -144,6 +156,7 @@ const XM_CONFIG_UNIT CFG_ALL_OPERATION_UNITS[] =
 	{ CFG_Operation_Camera,						"",		"Camera",						CFG_Operation_Value_Int,	XM_PLAY_BOTH},
 	{ CFG_Operation_Date_Watermark,				"",		"Date_Watermark",				CFG_Operation_Value_Bool,	true},
 	{ CFG_Operation_WiFi,				        "",		"wifi",				            CFG_Operation_Value_Bool,	true},
+    { CFG_Operation_Fatigue_reminder,		    "",		"fatigue",				        CFG_Operation_Value_Int,	0},
 	{ CFG_Operation_NEED_REPAIR_SDCARD,		"",		"Fsck Sdcard",			            CFG_Operation_Value_Bool,	false},
 	{ CFG_Operation_GAMMA_DELTA,		    "",		"DELTA",			                CFG_Operation_Value_Int,	100},
 };
@@ -175,6 +188,7 @@ enum SetPageSubpage
 {
     // Subpage_Return,  //返回
     Subpage_Resolution,//分辨率
+    Subpage_RecordSound,    //录音
     Subpage_CirRecordTime,//循环录影
     Subpage_LanguageSet,        //语言
  #if G_SENSOR_EN
@@ -192,8 +206,9 @@ enum SetPageSubpage
 #if VOICE_CONTROL_EN
     Subpage_VoiceControl,   //语音声控
 #endif
-    Subpage_RecordSound,    //录音
-    Subpage_KeyTone,       //按键声音
+    Subpage_KeyTone,       //音量大小
+    Subpage_Watermark,     //时间水印
+    Subpage_Fatigue_reminder,  //疲劳提醒
     //Subpage_HighDynamicRange,
     //Subpage_LightSourceFrequency,
     Subpage_ExposureCompensation, //曝光补偿
@@ -360,7 +375,16 @@ const struct menu_table sys_menu_config_table[] = {
         #endif 
          CFG_Operation_Video_Resolution,
      },
-
+  //录音
+  {
+     Subpage_RecordSound,                       //菜单列表名
+     {image"record_voice_off.png",image"record_voice_off-.png"},            //一级菜单图片路径
+     "Sound recording",     //一级菜单列表文案
+     {"Close",	"Open"},//二级菜单列表显示的文案
+     {Switchoff, Switchon},    //此菜单实际生效的值，默认选项值必定为其中之一
+      2,       //二级菜单个数
+     CFG_Operation_Record_Voice,
+  },
      //录像时间
     {
         Subpage_CirRecordTime,                       //菜单列表名
@@ -481,16 +505,7 @@ const struct menu_table sys_menu_config_table[] = {
      CFG_Operation_Voice_Control,
   },
 #endif
-  //录音
-  {
-     Subpage_RecordSound,                       //菜单列表名
-     {image"record_voice_off.png",image"record_voice_off-.png"},            //一级菜单图片路径
-     "Sound recording",     //一级菜单列表文案
-     {"Close",	"Open"},//二级菜单列表显示的文案
-     {Switchoff, Switchon},    //此菜单实际生效的值，默认选项值必定为其中之一
-      2,       //二级菜单个数
-     CFG_Operation_Record_Voice,
-  },
+
   //按键音
   {
      Subpage_KeyTone,                       //菜单列表名
@@ -500,6 +515,26 @@ const struct menu_table sys_menu_config_table[] = {
      {Switchoff, Switchon},    //此菜单实际生效的值，默认选项值必定为其中之一
       2,       //二级菜单个数
      CFG_Operation_Key_Voice,
+  },
+  //时间水印
+  {
+     Subpage_Watermark,                       //菜单列表名
+     {image"key_tone_off.png",image"key_tone_off-.png"},            //一级菜单图片路径
+     "Date watermark",     //一级菜单列表文案
+     {"Close",	"Open"},//二级菜单列表显示的文案
+     {Switchoff, Switchon},    //此菜单实际生效的值，默认选项值必定为其中之一
+      2,       //二级菜单个数
+      CFG_Operation_Date_Watermark,
+  },
+  //疲劳驾驶
+  {
+    Subpage_Fatigue_reminder,  //疲劳提醒,                       //菜单列表名
+     {image"key_tone_off.png",image"key_tone_off-.png"},            //一级菜单图片路径
+     "Fatigue reminder",     //一级菜单列表文案
+     {"Close",	"1 hour","2 hours","3 hours"},//二级菜单列表显示的文案
+     {0, 1,2,3},    //此菜单实际生效的值，默认选项值必定为其中之一
+      4,       //二级菜单个数
+      CFG_Operation_Fatigue_reminder,
   },
 //   //开机音
 //   {

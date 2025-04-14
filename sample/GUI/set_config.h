@@ -27,6 +27,25 @@
 #define COMPACT_RECORD_EN   0   //爱拍拍阿拉伯地区不开缩时录影，只开停车监控
 #endif
 
+#if defined SUPPORT_4K
+
+#if 0 //720p开启
+#define OSD_TIME_ADJUST_Y -190
+#define OSD_GPS_ADJUST_Y  420
+#else
+#define OSD_TIME_ADJUST_Y 0
+#define OSD_GPS_ADJUST_Y  420
+#define OSD_TIME_OFS_X  750
+
+#endif
+
+#else
+
+#define OSD_TIME_ADJUST_Y 0
+#define OSD_GPS_ADJUST_Y  420
+
+#endif
+
 int AlarmRegionCoorSw(float coor, float length, bool flag);
 
 //配置
@@ -112,6 +131,8 @@ enum XM_CONFIG_OPERATION
 	CFG_Operation_Date_Watermark,
     CFG_Operation_WiFi,
     CFG_Operation_Fatigue_reminder, //疲劳提醒
+    CFG_Operation_GPS_Watermark,
+    CFG_Operation_GPS_Unit,
 	CFG_Operation_NEED_REPAIR_SDCARD,	//需要fsck修复sd卡
     CFG_Operation_GAMMA_DELTA,
     CFG_Operation_NULL,
@@ -167,7 +188,9 @@ const XM_CONFIG_UNIT CFG_ALL_OPERATION_UNITS[] =
 	{ CFG_Operation_Date_Watermark,				"",		"Date_Watermark",				CFG_Operation_Value_Bool,	true},
 	{ CFG_Operation_WiFi,				        "",		"wifi",				            CFG_Operation_Value_Bool,	true},
     { CFG_Operation_Fatigue_reminder,		    "",		"fatigue",				        CFG_Operation_Value_Int,	0},
-	{ CFG_Operation_NEED_REPAIR_SDCARD,		"",		"Fsck Sdcard",			            CFG_Operation_Value_Bool,	false},
+    { CFG_Operation_GPS_Watermark,		         "",		"gps",			    CFG_Operation_Value_Bool,	true},
+    { CFG_Operation_GPS_Unit,				    "",		"speed_unit",				    CFG_Operation_Value_Int,	SpeeduUnit_Km},
+	{ CFG_Operation_NEED_REPAIR_SDCARD,		"",		"Fsck Sdcard",			            CFG_Operation_Value_Bool,	true},
 	{ CFG_Operation_GAMMA_DELTA,		    "",		"DELTA",			                CFG_Operation_Value_Int,	100},
 };
 
@@ -231,6 +254,11 @@ enum SetPageSubpage
     Subpage_Format,           //格式化存储卡
     Subpage_DefaultSet,      //恢复出厂设置
     Subpage_Edition,        //版本信息
+#if GPS_EN 
+    Subpage_GpsWatermark,//gps水印开关
+    Subpage_SpeedUnit,          //gps速度单位
+    Subpage_GpsInfo,          //gps信息
+#endif
     Subpage_Total,
 
 #if !G_SENSOR_EN
@@ -640,8 +668,40 @@ const struct menu_table sys_menu_config_table[] = {
      {0},    //此菜单实际生效的值，默认选项值必定为其中之一
       0,       //二级菜单个数
       CFG_Operation_NULL,
-  }
+  },
+#if GPS_EN 
+  //GPS开关
+  {
+      Subpage_GpsWatermark,                       //菜单列表名
+      { NULL},            //一级菜单图片路径
+          "GPS Switch",     //一级菜单列表文案
+      { "Close",	"Open" },//二级菜单列表显示的文案
+      { Switchoff, Switchon },    //此菜单实际生效的值，默认选项值必定为其中之一
+          2,       //二级菜单个数
+          CFG_Operation_GPS_Watermark,
+    },
+    //GPS速度单位
+    {
+        Subpage_SpeedUnit,                       //菜单列表名
+        {NULL},            //一级菜单图片路径
+         "Speed unit",     //一级菜单列表文案
+         {"km/h","mile/h"},//二级菜单列表显示的文案
+         {0,1},    //此菜单实际生效的值，默认选项值必定为其中之一
+          2,       //二级菜单个数
+         CFG_Operation_GPS_Unit,
+    },
 
+    //GPS信息
+    {
+        Subpage_GpsInfo,                       //菜单列表名
+        {NULL},            //一级菜单图片路径
+         "GPS information",     //一级菜单列表文案
+         {NULL},//二级菜单列表显示的文案
+         {0},    //此菜单实际生效的值，默认选项值必定为其中之一
+          0,       //二级菜单个数
+         CFG_Operation_NULL,
+    },
+#endif
 };
 
 

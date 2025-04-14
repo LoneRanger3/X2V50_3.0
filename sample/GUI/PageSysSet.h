@@ -47,6 +47,9 @@ public:
     void ChangeFatigueReminder(lv_event_t* e);
 	int setSystemTime(int year, int month, int day, int hour, int min, int sec);
 	int SystemTimeToRtcTimeSet(void);
+    void OpenGpsInfoPage();
+    void GpsWatermark(lv_event_t* e);
+    void ChangeSpeedUnit(lv_event_t* e);
 private:
 	void OpenFormatProgressPage();
 	void OpenEntryPage();
@@ -74,7 +77,19 @@ public:
 	int subpage_height_;
 	lv_timer_t* format_bar_timer_;
 	lv_obj_t* format_tip_win_;
-
+    lv_timer_t* gps_infomation_timer_;
+    lv_obj_t* gps_info_page_;
+    lv_obj_t* gps_bar_graph[10];//D???¡À¨¨?¨´¡Á¡ä¨ª?
+    lv_obj_t* gps_labe_graph[10];//D???¡À¨¨??¡À?
+    lv_obj_t* gps_status_label;//GPS¡Á¡ä¨¬?
+    lv_obj_t* Altitude_label;  //o¡ê¡ã?¡ê¡§?¡Á¡ê?
+    lv_obj_t* orientation_label;//¡¤???¡ê¡§?¨¨¡ê?
+    lv_obj_t* longitude_label;   //?-?¨¨
+    lv_obj_t* latitude_label;    //?3?¨¨
+    lv_obj_t* gps_speed_label;    //?¨´?¨¨
+    lv_obj_t* utc_label;          //¨º¡À??
+    lv_obj_t* visual_label;       //?¨¦¨º¨®
+    lv_obj_t* available_label;    //?¨¦¨®?
 private:
 	int format_result_;
 	int format_bar_value_;

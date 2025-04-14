@@ -26,8 +26,14 @@
 #include "XMThread.h"
 #include "VideoDecUnit.h"
 
+#if 0
+#define kOSDWidth	32//
+#define kOSDHeight	48//
+#else
 const int kOSDWidth = 32;
 const int kOSDHeight = 64;
+#endif
+
 const int kMaxTargetNum = 16;
 const int kThumbnailWidth = 320;
 const int kThumbnailHeight = 240;
@@ -278,7 +284,7 @@ private:
     int osd_time_y_[XM_MAX_CHANNEL_NUM+4];
     bool enable_osd_[XM_MAX_CHANNEL_NUM+4];
 
-    uint8_t osd_num_buf_[16][kOSDWidth*kOSDHeight*2];
+    uint8_t osd_num_buf_[XM_MAX_OSD_TIME_NUM][kOSDWidth*kOSDHeight*2];
     uint8_t osd_show_buf_[kOSDWidth*kOSDHeight*2*20];
     //抓图
     bool catch_pic_[XM_MAX_CHANNEL_NUM];

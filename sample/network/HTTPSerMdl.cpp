@@ -584,12 +584,16 @@ void HTTPSerMdl::lockVideo(int engineId, int connId, char * connType)
     g_engineId = engineId;
     g_connId = connId;
 }
-
+#include "../GUI/set_config.h"
 void HTTPSerMdl::capAbility(int engineId, int connId, char * connType)
 {
     cJSON* root_res = cJSON_CreateObject();
     cJSON* info = cJSON_CreateObject();
+    #if GPS_EN
+    cJSON_AddStringToObject(info, "value", "201001");
+    #else
     cJSON_AddStringToObject(info, "value", "001001");
+    #endif
     cJSON_AddNumberToObject(root_res, "result", 0);
     cJSON_AddItemToObject(root_res, "info", info);
     char* http_body = cJSON_Print(root_res);
@@ -618,7 +622,8 @@ void HTTPSerMdl::getFileList(int engineId, int connId, char * msg, char * connTy
     if (!record_stop) {
          XMLogW("record not stoped");
     }
- #endif 
+ #endif
+ 
     char* pbegin = strstr(msg, "?");
     if (pbegin == NULL) {
         cJSON* info = cJSON_CreateArray();

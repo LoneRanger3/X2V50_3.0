@@ -14,7 +14,7 @@
 #include "PageSet.h"
 #include "osd_user.h"
 #include "periphery/PeripheryThread.h"
-
+#include "gps.h"
 LV_FONT_DECLARE(lv_font_montserrat_30);
 extern int g_sd_status;
 extern int g_engineId;
@@ -248,6 +248,9 @@ void PageMain::CreatePage()
 	//RecordOnStartup();
 	//时间定时器
 	lv_timer_t* time_timer = lv_timer_create(UpdateTime, 100, NULL);
+ #if GPS_EN
+	gps_create_ui(1);
+  #endif
 }
 
 void PageMain::RecordOnStartup()

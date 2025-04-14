@@ -2,6 +2,7 @@
 #include "global_page.h"
 #include "PageSet.h"
 #include "mpp/MppMdl.h"
+#include "gps.h"
 extern int g_sd_status;
 
 PageSet::PageSet()
@@ -66,6 +67,11 @@ void PageSet::CreatePage()
     lv_obj_add_event_cb(sys_set_list_, OpenSubpage, LV_EVENT_ALL, NULL);
    uint8_t Total_num =sizeof(sys_menu_config_table)/sizeof(sys_menu_config_table[0]);
 	lv_obj_t* set_btn[100] = { NULL };
+    #if GPS_EN
+    if (!gps_insert_flag) {
+        Total_num=Total_num - 3;
+        }
+    #endif
 	for (int i = 0;i < Total_num;i++) {
 
 		set_btn[i] = lv_create_btn(sys_set_list_, screen_width, 58, lv_color_make(68, 68, 68), 2,
@@ -91,10 +97,14 @@ void PageSet::CreatePage()
 
 void PageSet::DelSetPageEvent(lv_event_t* e)
 {
+    int Total_num=Subpage_Total;
 	lv_event_code_t code = lv_event_get_code(e);
 	if (code == LV_EVENT_DELETE) {
 		PageSet* page_set = GlobalPage::Instance()->page_set();
-		for (int i = 0;i < Subpage_Total;i++) {
+    #if GPS_EN
+		if (!gps_insert_flag) Total_num=Subpage_Total - 3;
+	 #endif	
+		for (int i = 0;i < Total_num;i++) {
 			lv_obj_remove_event_cb(lv_obj_get_parent(page_set->menu_img_[i]), page_set->OpenSubpage);
 		}
 	}
@@ -192,7 +202,10 @@ void PageSet::OpenSubpage(lv_event_t* e)
             page_sys_set->OpenDefaultSetPage();
         }else if (user_data == Subpage_Edition) {
             page_sys_set->OpenEditionPage();
-        }else {
+        }else if (user_data == Subpage_GpsInfo) {
+            page_sys_set->OpenGpsInfoPage();
+        }
+        else {
 
             lv_obj_t* page = lv_obj_create(lv_scr_act());
             lv_obj_set_style_text_font(page, lv_font_all, 0);
@@ -315,6 +328,12 @@ void PageSet::OpenSubpage_Function(lv_event_t* e)
          break;
      case Subpage_Mirror:
          page_video_set->ChangeMirrorSwitch(e);
+         break;
+     case Subpage_GpsWatermark:
+         page_sys_set->GpsWatermark(e);
+         break;
+     case Subpage_SpeedUnit:
+         page_sys_set->ChangeSpeedUnit(e);
          break;
     }
 

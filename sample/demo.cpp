@@ -32,6 +32,7 @@
 #include "CommDef.h"
 #include "DemoDef.h"
 #include "osd_user.h"
+#include "gps.h"
 extern "C" {
 #include "cr_vo.h"
 }
@@ -314,7 +315,28 @@ void OnMWEventCallBack(long handle, XMEventType event_type, const char* msg, int
 		PeripheryManager::Instance()->DecodeEnable(param);
 		return;
 	}
-
+#if GPS_EN	
+    if (XM_EVENT_RECORDFILE_START == event_type) {
+		XMLogI("XM_EVENT_RECORD_START, channel=%d", handle);
+		if(handle==0){
+		write_start=1;
+		}else if(handle==1){
+		write_startback=1;
+		}
+		return;
+	}
+	if (XM_EVENT_RECORDFILE_END == event_type) {
+        XMLogI("XM_EVENT_RECORDFILE_END, channel=%d, file name=%s", handle, msg); //msg.c_str()
+			if(handle==0){
+				write_start=0;
+				get_gps_data(msg);
+			}else if(handle==1){
+				write_startback=0;
+				get_gps_back_data(msg);
+			}	
+		return;
+    }
+#endif
 	MWEventInfo event_info;
 	event_info.handle = handle;
 	event_info.event_type = event_type;
@@ -347,11 +369,13 @@ void OnMWEventCallBack(long handle, XMEventType event_type, const char* msg, int
 			GlobalPage::Instance()->page_main()->OpenScreen();
 		}
 
+		#if 0
 		if (event_type != XM_EVENT_KEYWORD_ZHUAPAIZHAOPIAN) {
 			std::string sound_file = kAudioPath;
 			sound_file += "haode_16k.pcm";
 			MppMdl::Instance()->PlaySound(sound_file.c_str());
 		}
+		#endif
 	}
 }
 
@@ -361,6 +385,9 @@ void OnMWLogCallback(char* log_buf, int log_len, int64_t user)
 	LogFileManager::Instance()->get_log_data(log_buf,log_len,user);
 }
 
+#if OSD_SHOW_ADJUST
+extern int osd_time_ofs_y;
+#endif
 int ProcessEvent(long handle, XMEventType event_type, const std::string& msg, int param) 
 {
  	switch (event_type)
@@ -837,6 +864,20 @@ int ProcessEvent(long handle, XMEventType event_type, const std::string& msg, in
 		{
 			XMLogI("XM_EVENT_RECORDFILE_END, channel=%d, file name=%s", handle, msg.c_str());
 		}
+		break;
+	case XM_EVENT_GPS_TIME:
+		XMLogI("XM_EVENT_GPS_TIME, param=%d", param);
+		#if GPS_EN
+			if(1){
+				if(GlobalPage::Instance()->page_main()->record_time_label_){
+					GlobalPage::Instance()->page_main()->CloseRecord();
+					update_hardware_time(gps.time);
+					GlobalPage::Instance()->page_main()->StartRecord();
+				}else{
+					update_hardware_time(gps.time);
+				}
+			}
+		#endif	
 		break;
 	case XM_EVENT_RECORD_SOUND_ENABLE:
 		{
@@ -1874,6 +1915,10 @@ int main(int argc, char *argv[ ])
 
 		lcd_vo_param vo_param = {0};
 		//LIBCR_VO_SetParam(&vo_param);
+		#if GPS_EN
+		//串口GPS外设调用	
+			UartGpsThreadStart();
+		#endif 
 	}
 	//子进程升级
 	else if (argc == 2) {

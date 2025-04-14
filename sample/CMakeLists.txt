@@ -199,5 +199,6 @@ target_link_libraries (car_demo
     m 
 	z
 	cr
-    lvgl)
+    lvgl
+	SunAlgorithm)
 endif()

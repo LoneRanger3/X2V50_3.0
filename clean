@@ -1,0 +1,9 @@
+#!/bin/bash
+
+CURRENT_DIR=$(cd $(dirname $0); pwd)
+echo $CURRENT_DIR
+
+rm -rf $CURRENT_DIR/pack/tmp
+rm -rf $CURRENT_DIR/lvgl-8.2.0/build
+rm -rf $CURRENT_DIR/sample/build
+

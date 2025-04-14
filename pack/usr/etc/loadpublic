@@ -1,0 +1,18 @@
+#!/bin/sh
+
+(
+	#sleep 3
+	insmod /usr/lib/modules/dwc2.ko
+	insmod /usr/lib/modules/xm_usb0.ko
+	insmod /usr/lib/modules/wifi_pdn.ko value=-14
+	insmod /usr/lib/modules/cfg80211.ko
+	#insmod /usr/lib/modules/xm713g.ko
+	#insmod /usr/lib/modules/6032_x.ko wifi_bt_comb=1
+	insmod /usr/lib/modules/8188fu.ko
+	ifconfig eth2 up 192.168.169.1
+	mkdir /var/run
+	#/usr/sbin/hostapd /mnt/mtd/Config/hostapd.conf -B -ddd
+	#/sbin/udhcpd -fS /usr/sbin/udhcpd.conf &
+)&
+
+

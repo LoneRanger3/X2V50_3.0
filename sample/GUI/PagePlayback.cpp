@@ -151,6 +151,10 @@ void PagePlayback::CreatePage()
 	else {
 		lv_obj_set_style_bg_opa(playback_page_, 0, 0);
 	}
+
+#if 0
+    GlobalPage::Instance()->page_set()->Createfunction_bar(playback_page_,58,0,true,true);
+#endif
 }
 
 void PagePlayback::BtnEvent(lv_event_t* e)
@@ -225,7 +229,7 @@ void PagePlayback::OpenSetPage()
     lv_label_set_text(title_label_, GetParsedString("Set"));
     lv_obj_align(title_label_, LV_ALIGN_CENTER, 0, size_h(3));
 
-    lv_obj_t* menu_list_ = lv_create_page(video_set_page_, screen_width, size_h(298),
+    lv_obj_t* menu_list_ = lv_create_page(video_set_page_, screen_width, size_h(PAGE_MENU_LIST_H),
         lv_color_make(16, 16, 16), 0, 0, lv_font_all, lv_color_white(), 0);
     lv_obj_align(menu_list_, LV_ALIGN_TOP_MID, size_w(0), size_h(62));
     lv_obj_add_flag(menu_list_, LV_OBJ_FLAG_SCROLLABLE);
@@ -252,8 +256,12 @@ void PagePlayback::OpenSetPage()
 		lv_obj_align(label, LV_ALIGN_TOP_LEFT, size_w(20), size_h(3));
 	}
 
-     SelectFileStyle(menu_list_, screen_width, size_h(298));
+     SelectFileStyle(menu_list_, screen_width, size_h(PAGE_MENU_LIST_H));
 	lv_group_focus_next(GlobalData::Instance()->group);
+
+#if 0
+	GlobalPage::Instance()->page_set()->Createfunction_bar(video_set_page_,58,7,true,false);
+#endif
 }
 
 void PagePlayback::DelSetPageEvent(lv_event_t* e)
@@ -357,7 +365,7 @@ void PagePlayback::OpenConfirmPage(int flag)
 	lv_obj_set_pos(page, 0, start_y);
 	lv_obj_add_event_cb(page, DeletedEvent, LV_EVENT_DELETE, NULL);
 
-	lv_obj_t* tip_win = lv_create_page(page, screen_width, 298, lv_palette_darken(LV_PALETTE_GREY, 2), 5, 2,
+	lv_obj_t* tip_win = lv_create_page(page, screen_width, PAGE_MENU_LIST_H, lv_palette_darken(LV_PALETTE_GREY, 2), 5, 2,
 		lv_font_all, lv_color_white(), 0);
 	lv_obj_align(tip_win, LV_ALIGN_CENTER, 0, size_h(30));
 
@@ -955,7 +963,7 @@ void PagePlayback::OpenSelectFilePage()
     lv_label_set_text(title_label_, GetParsedString("File management"));
     lv_obj_align(title_label_, LV_ALIGN_CENTER, 0, size_h(3));
 
-    lv_obj_t *filetype_list_ = lv_create_page(select_filetype_page_, screen_width, size_h(298),
+    lv_obj_t *filetype_list_ = lv_create_page(select_filetype_page_, screen_width, size_h(PAGE_MENU_LIST_H),
         lv_color_make(16, 16, 16), 0, 0, lv_font_all, lv_color_white(), 0);
     lv_obj_align(filetype_list_, LV_ALIGN_TOP_MID, size_w(0), size_h(62));
     lv_obj_add_flag(filetype_list_, LV_OBJ_FLAG_SCROLLABLE);
@@ -981,7 +989,11 @@ void PagePlayback::OpenSelectFilePage()
 		label = lv_create_label(filetype_img_[i], size_w(screen_width), text[i].c_str(), LV_ALIGN_TOP_LEFT, 0);
         lv_obj_align(label, LV_ALIGN_TOP_LEFT, size_h(20), size_h(3));
 	}
-    SelectFileStyle(filetype_list_, screen_width, size_h(298));
+    SelectFileStyle(filetype_list_, screen_width, size_h(PAGE_MENU_LIST_H));
+
+#if 1
+    GlobalPage::Instance()->page_set()->Createfunction_bar(select_filetype_page_,58,7,true,false);
+#endif
 }
 
 void PagePlayback::DelSelectFilePageEvent(lv_event_t* e)

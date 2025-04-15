@@ -666,6 +666,10 @@ void PageSysSet::OpenFormatPage()
 	lv_obj_align_to(list, label, LV_ALIGN_OUT_BOTTOM_MID, 0, size_h(10));
 
 	GlobalData::Instance()->opened_subpage_[0] = page;
+
+	#if 1
+	GlobalPage::Instance()->page_set()->Createfunction_bar(page,36,7,true,false);
+	#endif
 }
 
 void PageSysSet::OpenFormatTipWin()
@@ -877,6 +881,10 @@ void PageSysSet::OpenDefaultSetPage()
 	lv_obj_align_to(list, label, LV_ALIGN_OUT_BOTTOM_MID, 0, size_h(20));
 
 	GlobalData::Instance()->opened_subpage_[0] = page;
+
+#if 1
+	GlobalPage::Instance()->page_set()->Createfunction_bar(page,36,7,true,false);
+#endif
 }
 
 void PageSysSet::RestoreDefaultSetEvent(lv_event_t* e)

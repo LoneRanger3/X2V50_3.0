@@ -29,6 +29,7 @@ public:
 	void RecordVoiceEnable(bool enable);
 	void ReturnPreMenu();
 	static void CloseSubPage(lv_event_t* e);
+	void Createfunction_bar(lv_obj_t* curr_page, lv_coord_t height, lv_coord_t y_ofs, bool ok_enable, bool delete_enable);
 private:
 	void CreatePage();
 	static void OpenSubpage(lv_event_t* e);

@@ -22,6 +22,8 @@
 #define X2V50_2_PRODUCT_TEST    0    //生产测试(1.录像页面显示wifi名称密码。2.gsensor灵敏度打开。3.WiFi默认打开。4.gps模拟关闭)
 #define SD_CARD_PLAY_INTERVAL_TIME 30  //SD卡播报间隔
 #define AIPAIPAI_PROJECT_ARABIC 0  //爱拍拍阿拉伯地区定制
+#define AIPAIPAI_PROJECT_ARABIC 0  //爱拍拍阿拉伯地区定制
+#define PAGE_MENU_LIST_H 238
 
 #if AIPAIPAI_PROJECT_ARABIC
 #define COMPACT_RECORD_EN   0   //爱拍拍阿拉伯地区不开缩时录影，只开停车监控

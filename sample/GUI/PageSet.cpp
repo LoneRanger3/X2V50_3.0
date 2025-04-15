@@ -44,6 +44,60 @@ void SetMenuStyle(lv_obj_t* list, lv_coord_t width, lv_coord_t height)
         }
     }
 }
+
+#define function_bar_ofs_y 7
+
+void PageSet::Createfunction_bar(lv_obj_t* curr_page, lv_coord_t height, lv_coord_t y_ofs, bool ok_enable, bool delete_enable)
+{
+#if 1
+	lv_obj_t* Settings_function_page_ = lv_create_page(curr_page, screen_width, size_h(height),
+		lv_color_make(68, 68, 68), 0, 0, lv_font_all, lv_color_white(), 0);//46 36 30
+	lv_obj_align(Settings_function_page_, LV_ALIGN_BOTTOM_MID, 0, 0);
+
+	if(ok_enable)
+	{
+    	lv_obj_t* ok_img_= lv_img_create(Settings_function_page_);
+    	lv_img_set_src(ok_img_, image_path"ok.png");
+    	lv_obj_align(ok_img_, LV_ALIGN_BOTTOM_LEFT, size_w(40), -size_h(y_ofs));
+	}
+
+	#if 1
+	if(delete_enable){
+		
+        lv_obj_t* lock_img_ = lv_img_create(Settings_function_page_);
+        lv_img_set_src(lock_img_, image_path"lock_on.png");
+        //lv_obj_align_to(lock_img_, ok_img_, LV_ALIGN_OUT_RIGHT_MID, size_w(19), 0);
+		lv_obj_align(lock_img_, LV_ALIGN_BOTTOM_LEFT, size_w(53), 0);
+		
+        lv_obj_t* slash_img_ = lv_img_create(Settings_function_page_);
+        lv_img_set_src(slash_img_, image_path"slash.png");
+        lv_obj_align_to(slash_img_, lock_img_, LV_ALIGN_OUT_RIGHT_MID, -size_w(6), size_h(0));
+    	
+    	lv_obj_t* delete_img_ = lv_img_create(Settings_function_page_);
+    	lv_img_set_src(delete_img_, image_path"delete.png");
+    	lv_obj_align_to(delete_img_, slash_img_, LV_ALIGN_OUT_RIGHT_MID, -size_w(4), 0);
+	}
+	#else
+	lv_obj_t* delete_img_= lv_img_create(Settings_function_page_);
+	lv_img_set_src(delete_img_, image_path"ok.png");
+	lv_obj_align(delete_img_, LV_ALIGN_BOTTOM_LEFT, size_w(72), -size_h(y_ofs));
+    #endif
+	
+	lv_obj_t* up_img_= lv_img_create(Settings_function_page_);
+	lv_img_set_src(up_img_, image_path"up.png");
+	lv_obj_align(up_img_, LV_ALIGN_BOTTOM_MID, -size_w(0), -size_h(y_ofs));
+
+	lv_obj_t* down_img_= lv_img_create(Settings_function_page_);
+	lv_img_set_src(down_img_, image_path"down.png");
+	//lv_obj_align(down_img_, LV_ALIGN_BOTTOM_MID, size_w(0), size_h(0));
+	lv_obj_align_to(down_img_, up_img_, LV_ALIGN_OUT_RIGHT_MID, size_w(100), size_h(0));
+	lv_obj_t* return_img_= lv_img_create(Settings_function_page_);
+	lv_img_set_src(return_img_, image_path"set_return.png");
+	lv_obj_align(return_img_, LV_ALIGN_BOTTOM_RIGHT, -size_w(53), -size_h(y_ofs));
+#endif
+
+}
+
 void PageSet::CreatePage()
 {
 	set_page_ = lv_create_page(lv_scr_act(), screen_width, screen_height, lv_color_make(16, 16, 16), 0, 0,
@@ -59,7 +113,7 @@ void PageSet::CreatePage()
 	lv_label_set_text(title_label_, GetParsedString("Set"));
 	lv_obj_align(title_label_, LV_ALIGN_CENTER, 0, size_h(3));
 
-	sys_set_list_ = lv_create_page(set_page_, screen_width, size_h(298),
+	sys_set_list_ = lv_create_page(set_page_, screen_width, size_h(PAGE_MENU_LIST_H),
 		lv_color_make(16, 16, 16), 0, 0, lv_font_all, lv_color_white(), 0);
 	lv_obj_align(sys_set_list_, LV_ALIGN_TOP_MID, size_w(0), size_h(62));
 	lv_obj_set_scrollbar_mode(sys_set_list_, LV_SCROLLBAR_MODE_OFF);
@@ -92,7 +146,10 @@ void PageSet::CreatePage()
 	   lv_obj_align(label, LV_ALIGN_TOP_LEFT, size_h(20), size_h(3));
 	}
 
-    SetMenuStyle(sys_set_list_, screen_width, size_h(298));
+    SetMenuStyle(sys_set_list_, screen_width, size_h(PAGE_MENU_LIST_H));
+	#if 1
+	Createfunction_bar(set_page_,58,7,true,false);
+	#endif
 }
 
 void PageSet::DelSetPageEvent(lv_event_t* e)

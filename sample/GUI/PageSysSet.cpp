@@ -1586,12 +1586,21 @@ void PageSysSet::ChangeBootToneEvent(lv_event_t* e)
 		GlobalPage::Instance()->page_sys_set()->SetFocusedObjStyle(target);
 		
 		XM_CONFIG_VALUE cfg_value;
-		cfg_value.bool_value = user_data;
+		cfg_value.int_value = user_data;
 		int ret = GlobalData::Instance()->car_config()->SetValue(CFG_Operation_boot_Voice, cfg_value);
 		if (ret < 0) {
 			XMLogE("set config error, opr=CFG_Operation_boot_Voice");
 		}
-
+        if (cfg_value.int_value==Volume_Close) {
+			XM_Middleware_Sound_SetVolume(0);
+		} else if (cfg_value.int_value==Volume_Low) {
+			XM_Middleware_Sound_SetVolume(33);
+		} else if (cfg_value.int_value==Volume_Mid) {
+			XM_Middleware_Sound_SetVolume(66);
+		} else {
+			XM_Middleware_Sound_SetVolume(100);
+		}
+		GlobalPage::Instance()->page_main()->playsound_flag_ = cfg_value.int_value;
 		GlobalPage::Instance()->page_set()->ReturnPreMenu();
 	}
 }

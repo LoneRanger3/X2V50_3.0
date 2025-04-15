@@ -455,6 +455,7 @@ typedef struct APP_PARAM_ITEMS
 	int parking_monitor;
 	int screen_standby;
 	int timelapse_rate;
+	int speaker;
 	int key_tone;
 	int park_record_time;
 	int ir_mode;

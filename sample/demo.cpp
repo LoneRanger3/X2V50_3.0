@@ -213,9 +213,9 @@ int ProcessGetParam(char* res_str)
 	PackParamInfo("voice_control", voice_control_items_array, 2, voice_control_index_array, info);
   #endif
   
-	const char* keytone_items_array[2] = { "on", "off" };
-	const int keytone_index_array[2] = { 1, 0 };
-	PackParamInfo("key_tone", keytone_items_array, 2, keytone_index_array, info);
+	const char* keytone_items_array[4] = {"off","low", "middle" ,"high"};
+	const int keytone_index_array[4] = { 0,1,2,3 };
+	PackParamInfo("speaker", keytone_items_array, 4, keytone_index_array, info);
 #if COMPACT_RECORD_EN
    //缩时录影帧率
     const char* timelapse_rate_items_array[4] = { "off", "1fps", "2fps", "5fps" };
@@ -1158,6 +1158,7 @@ int ProcessEvent(long handle, XMEventType event_type, const std::string& msg, in
 		{
 			XMLogI("XM_EVENT_KEYTONE_ENABLE, param = %d", param);
 			XM_CONFIG_VALUE cfg_value;
+		#if 0
 			cfg_value.bool_value = param == 1 ? true : false;
 			int ret = GlobalData::Instance()->car_config()->SetValue(CFG_Operation_Key_Voice, cfg_value);
 			if (ret < 0) {
@@ -1165,6 +1166,14 @@ int ProcessEvent(long handle, XMEventType event_type, const std::string& msg, in
 			}
 
 			GlobalData::Instance()->key_tone_ = cfg_value.bool_value;
+		#else
+		   cfg_value.int_value = param;
+		   int ret = GlobalData::Instance()->car_config()->SetValue(CFG_Operation_boot_Voice, cfg_value);
+			if (ret < 0) {
+				XMLogE("set config error, opr=CFG_Operation_boot_Voice");
+			}
+			GlobalPage::Instance()->page_main()->playsound_flag_ = cfg_value.int_value;
+		#endif
 		}
 		break;
 	case XM_EVENT_PARK_RECORD_TIME:
@@ -1772,11 +1781,20 @@ int main(int argc, char *argv[ ])
 			//播放开机音频
         XM_CONFIG_VALUE cfg_value;
 		int ret = GlobalData::Instance()->car_config()->GetValue(CFG_Operation_boot_Voice, cfg_value);
-		int PlaySound_flag=cfg_value.bool_value;
-        if(ret>=0 && cfg_value.bool_value){
+		if (cfg_value.int_value==Volume_Close) {
+			XM_Middleware_Sound_SetVolume(0);
+		} else if (cfg_value.int_value==Volume_Low) {
+			XM_Middleware_Sound_SetVolume(33);
+		} else if (cfg_value.int_value==Volume_Mid) {
+			XM_Middleware_Sound_SetVolume(66);
+		} else {
+			XM_Middleware_Sound_SetVolume(100);
+		}
+		int PlaySound_flag=cfg_value.int_value;
+        if(ret>=0 && cfg_value.int_value){
 		std::string sound_file = kAudioPath;
 		sound_file += "kaiji_16k.pcm";
-		GlobalPage::Instance()->page_main()->playsound_flag_ = cfg_value.bool_value;
+		GlobalPage::Instance()->page_main()->playsound_flag_ = cfg_value.int_value;
 		MppMdl::Instance()->PlaySound(sound_file.c_str());
 		}
 		cfg_value.bool_value = false;

@@ -304,7 +304,8 @@ void PageSet::OpenSubpage_Function(lv_event_t* e)
          page_video_set->ChangeRecordSoundEvent(e);
           break;
      case Subpage_KeyTone:
-         page_sys_set->ChangeKeyToneEvent(e);
+         //page_sys_set->ChangeKeyToneEvent(e);
+         page_sys_set->ChangeBootToneEvent(e);
           break;
      case Subpage_Watermark:
 	     page_video_set->ChangeDateWatermarkEvent(e);

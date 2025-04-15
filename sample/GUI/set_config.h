@@ -161,7 +161,7 @@ const XM_CONFIG_UNIT CFG_ALL_OPERATION_UNITS[] =
 	{ CFG_Operation_Lcd_Light,			    "",		"lcd_light",			CFG_Operation_Value_Int,	60},
 	{ CFG_Operation_Language,				"",		"language",				CFG_Operation_Value_Int,	English},//  English  SimpChinese TradChinese
 	{ CFG_Operation_Key_Voice,				"",		"key_voice",			CFG_Operation_Value_Bool,	true},
-	{ CFG_Operation_boot_Voice,				"",		"boot_voice",			CFG_Operation_Value_Bool,	true},
+	{ CFG_Operation_boot_Voice,				"",		"boot_voice",			CFG_Operation_Value_Int,	Volume_Mid},//Volume_High
 	{ CFG_Operation_Acc_Power_Supply,		"",		"acc_power_supply",		CFG_Operation_Value_Bool,	true},
 	{ CFG_Operation_Voice_Control,		    "",		"Voice_Control",		CFG_Operation_Value_Bool,	false},// false true
 	{ CFG_Operation_AutoShutdown_Time,			"",	"AutoShutdown_Time",	CFG_Operation_Value_Int,	0},
@@ -421,16 +421,16 @@ const struct menu_table sys_menu_config_table[] = {
         #endif 
          CFG_Operation_Video_Resolution,
      },
-  //录音
-  {
-     Subpage_RecordSound,                       //菜单列表名
-     {image"record_voice_off.png",image"record_voice_off-.png"},            //一级菜单图片路径
-     "Sound recording",     //一级菜单列表文案
-     {"Close",	"Open"},//二级菜单列表显示的文案
-     {Switchoff, Switchon},    //此菜单实际生效的值，默认选项值必定为其中之一
-      2,       //二级菜单个数
-     CFG_Operation_Record_Voice,
-  },
+    //录音
+    {
+        Subpage_RecordSound,                       //菜单列表名
+        {image"record_voice_off.png",image"record_voice_off-.png"},            //一级菜单图片路径
+        "Sound recording",     //一级菜单列表文案
+        {"Close",	"Open"},//二级菜单列表显示的文案
+        {Switchoff, Switchon},    //此菜单实际生效的值，默认选项值必定为其中之一
+        2,       //二级菜单个数
+        CFG_Operation_Record_Voice,
+    },
      //录像时间
     {
         Subpage_CirRecordTime,                       //菜单列表名
@@ -551,16 +551,15 @@ const struct menu_table sys_menu_config_table[] = {
      CFG_Operation_Voice_Control,
   },
 #endif
-
-  //按键音
+  //音量大小
   {
      Subpage_KeyTone,                       //菜单列表名
      {image"key_tone_off.png",image"key_tone_off-.png"},            //一级菜单图片路径
-     "Key tone",     //一级菜单列表文案
-     {"Close",	"Open"},//二级菜单列表显示的文案
-     {Switchoff, Switchon},    //此菜单实际生效的值，默认选项值必定为其中之一
-      2,       //二级菜单个数
-     CFG_Operation_Key_Voice,
+     "Volume",     //一级菜单列表文案
+     {"Close",	"high",		"middle", "low"},//二级菜单列表显示的文案
+     {Volume_Close, Volume_High,Volume_Mid,Volume_Low},    //此菜单实际生效的值，默认选项值必定为其中之一
+      4,       //二级菜单个数
+      CFG_Operation_boot_Voice,
   },
   //时间水印
   {
@@ -582,6 +581,7 @@ const struct menu_table sys_menu_config_table[] = {
       4,       //二级菜单个数
       CFG_Operation_Fatigue_reminder,
   },
+
 //   //开机音
 //   {
 //      Subpage_BootTone,                       //菜单列表名

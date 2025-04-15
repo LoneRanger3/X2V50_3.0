@@ -2485,9 +2485,11 @@ int video_downscale(VIDEO_FRAME_INFO_S *src_frame, VIDEO_FRAME_INFO_S *dst_frame
 	XM_MPI_SYS_MmzFlushCache(d_phy_addr, d_y_addr, d_w * d_h * 3 / 2);
 	XM_MPI_SYS_Munmap(s_y_addr, s_w * s_h * 3 / 2);
 	XM_MPI_SYS_Munmap(d_y_addr, d_w * d_h * 3 / 2);
+	
 	return 0;
 }
 #endif
+
 int MppMdl::SoftVoProc()
 {
 	XMLogI("SoftVoProc thread");

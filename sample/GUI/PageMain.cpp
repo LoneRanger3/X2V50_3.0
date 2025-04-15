@@ -564,8 +564,10 @@ void PageMain::AppMenuValue(void)
 	   param_items.gsr_sensitivity=-1;
 #endif
 
-		GlobalData::Instance()->car_config()->GetValue(CFG_Operation_Key_Voice, cfg_value);
-		param_items.key_tone = cfg_value.bool_value;
+		GlobalData::Instance()->car_config()->GetValue(CFG_Operation_boot_Voice, cfg_value);
+		param_items.speaker = cfg_value.int_value;
+
+		param_items.key_tone = -1;
 
 #if COMPACT_RECORD_EN
 		GlobalData::Instance()->car_config()->GetValue(CFG_Operation_Compact_Record_Duration, cfg_value);

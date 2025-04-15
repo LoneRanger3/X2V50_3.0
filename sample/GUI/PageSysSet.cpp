@@ -16,7 +16,7 @@
 extern int g_sd_status;
 #include "log/LogFileManager.h"
 #include "gps.h"
-PageSysSet::PageSysSet() :subpage_width_(screen_width), subpage_height_(size_h(190)), time_page_(NULL),
+PageSysSet::PageSysSet() :subpage_width_(screen_width), subpage_height_(size_h(298)), time_page_(NULL),
 voice_control_page_(NULL), format_bar_timer_(NULL), camera_dir_(XM_PLAY_BOTH), upgrade_start_time_(0),gps_infomation_timer_(NULL)
 {
 	entry_page_[0] = NULL;

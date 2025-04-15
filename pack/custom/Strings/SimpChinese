@@ -1,4 +1,4 @@
-Set=设置
+﻿Set=设置
 Resolution ratio=分辨率
 Exposure compensation=曝光补偿
 Collision sensitivity=碰撞灵敏度
@@ -195,7 +195,7 @@ Recording mode, down key to control WiFi switch=录影界面,下键控制WiFi开
 Please turn off WiFi first=请先关闭WiFi
 Boot sound=开关机音效
 Fatigue reminder=疲劳驾驶
-1 hour=1小时aaaaaa
+1 hour=1小时
 2 hours=2小时
 3 hours=3小时
 You have been driving for 1 hour, please pay attention to rest=您已持续驾驶1小时，请注意休息

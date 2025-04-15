@@ -1859,7 +1859,11 @@ void PageMain::PWREvent()
 
 void PageMain::SetListStyle(lv_obj_t* list, lv_coord_t width, lv_coord_t height)
 {
-	lv_obj_set_size(list, width+30, height);
+#if 1
+    lv_obj_set_size(list, width+30, height-45);
+#else
+    lv_obj_set_size(list, width+30, height);
+#endif
 	lv_obj_set_style_border_width(list, 0, 0);
 	lv_obj_set_style_bg_color(list, lv_color_make(68, 68, 68), 0);
 	lv_obj_set_style_radius(list, 0, 0);

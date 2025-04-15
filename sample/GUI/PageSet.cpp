@@ -263,14 +263,19 @@ void PageSet::OpenSubpage(lv_event_t* e)
             page_sys_set->OpenGpsInfoPage();
         }
         else {
-
+            #if 1
+			lv_obj_t* page = lv_create_page(lv_scr_act(), screen_width, size_h(PAGE_MENU_LIST_H),
+				lv_color_make(16, 16, 16), 0, 0, lv_font_all, lv_color_white(), 0);
+			lv_obj_set_pos(page, 0, 122);
+			#else
             lv_obj_t* page = lv_obj_create(lv_scr_act());
+			#endif
             lv_obj_set_style_text_font(page, lv_font_all, 0);
-            lv_obj_set_scrollbar_mode(page, LV_SCROLLBAR_MODE_OFF);
+            lv_obj_set_scrollbar_mode(page, LV_SCROLLBAR_MODE_ACTIVE);
             lv_obj_set_scroll_dir(page,LV_DIR_VER);
             lv_obj_add_style(page, &GlobalPage::Instance()->page_set()->subpage_style_, 0);
             lv_obj_add_event_cb(page, GlobalPage::Instance()->page_sys_set()->DeletedEvent, LV_EVENT_DELETE, NULL);
-            lv_obj_align(page, LV_ALIGN_TOP_MID, 0, size_h(62) + start_y);
+            //lv_obj_align(page, LV_ALIGN_TOP_MID, 0, size_h(48) + start_y);
 
             lv_obj_t* list = lv_list_create(page);
 

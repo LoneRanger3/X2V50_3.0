@@ -180,13 +180,21 @@ const XM_CONFIG_UNIT CFG_ALL_OPERATION_UNITS[] =
 	{ CFG_Operation_Reject_Flicker,			"",		"Reject_Flicker",		CFG_Operation_Value_Int,	0},
 	{ CFG_Operation_Compact_Record_Fps,			"",		"Compact_Record_Fps",			CFG_Operation_Value_Int,	0},
 	{ CFG_Operation_Compact_Record_Duration,	"",		"Compact_Record_Duration",		CFG_Operation_Value_Int,	0},
-	{ CFG_Operation_Collision_Sensitivity,		"",		"Collision_Sensitivity",		CFG_Operation_Value_Int,	Sensitivity_Close}, //Sensitivity_Low  Sensitivity_Mid
+    #if X2V50_2_PRODUCT_TEST
+	{ CFG_Operation_Collision_Sensitivity,		"",		"Collision_Sensitivity",		CFG_Operation_Value_Int,	Sensitivity_Mid},
+	#else
+	{ CFG_Operation_Collision_Sensitivity,		"",		"Collision_Sensitivity",		CFG_Operation_Value_Int,	Sensitivity_Close},
+	#endif
 	{ CFG_Operation_Record_Voice,				"",		"Record_Voice",					CFG_Operation_Value_Bool,	true},
 	{ CFG_Operation_Collision_Startup,			"",		"Collision_Startup",			CFG_Operation_Value_Bool,	false},
 	{ CFG_Operation_Car_Charger,				"",		"Car_Charger",					CFG_Operation_Value_Bool,	true},
 	{ CFG_Operation_Camera,						"",		"Camera",						CFG_Operation_Value_Int,	XM_PLAY_BOTH},
 	{ CFG_Operation_Date_Watermark,				"",		"Date_Watermark",				CFG_Operation_Value_Bool,	true},
-	{ CFG_Operation_WiFi,				        "",		"wifi",				            CFG_Operation_Value_Bool,	true},
+	#if 1//X2V50_2_PRODUCT_TEST
+	{ CFG_Operation_WiFi,				        "",		"wifi",				            CFG_Operation_Value_Bool,	true},//生产软件默认打开
+	#else
+	{ CFG_Operation_WiFi,				        "",		"wifi",				            CFG_Operation_Value_Bool,	false},
+	#endif
     { CFG_Operation_Fatigue_reminder,		    "",		"fatigue",				        CFG_Operation_Value_Int,	0},
     { CFG_Operation_GPS_Watermark,		         "",		"gps",			    CFG_Operation_Value_Bool,	true},
     { CFG_Operation_GPS_Unit,				    "",		"speed_unit",				    CFG_Operation_Value_Int,	SpeeduUnit_Km},

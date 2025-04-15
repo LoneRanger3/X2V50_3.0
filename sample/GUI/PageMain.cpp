@@ -227,6 +227,43 @@ void PageMain::CreatePage()
 	lv_obj_add_event_cb(wifi_img_, BtnEvent, LV_EVENT_ALL, (void*)RecordPageBtnFlag_Wifi);
 	lv_obj_set_ext_click_area(wifi_img_, 20);
 	//lv_obj_add_flag(wifi_img_, LV_OBJ_FLAG_HIDDEN);
+	
+#if 1//
+	//卡修复
+	int tep = 0;
+	XM_CONFIG_VALUE get_cfg_value;
+	tep = GlobalData::Instance()->car_config()->GetValue(CFG_Operation_NEED_REPAIR_SDCARD, get_cfg_value);
+	XMLogI("[repair sd card] 1 tep: %d , %d \r\n", tep, get_cfg_value.bool_value);
+	
+	if(tep < 0){
+		
+		tep = GlobalData::Instance()->car_config()->GetValue(CFG_Operation_NEED_REPAIR_SDCARD, get_cfg_value);
+	}
+	
+	XMLogI("[repair sd card] 2 tep: %d , %d \r\n", tep, get_cfg_value.bool_value);
+	if(tep >= 0 && get_cfg_value.bool_value) 
+	{
+#if 1
+		XMLogW("sdio_status = %d \r\n", LIBCR_SDIO1_Status());
+		if(LIBCR_SDIO1_Status()){
+			XM_Middleware_WDT_WatchDogStop();
+			XMLogW("before fsck sdcard");
+			const char* kDevNode1 = "/dev/mmcblk0p1";
+			const char* kDevNode2 = "/dev/mmcblk0";
+			bool find_dev_node1 = access(kDevNode1, F_OK) == 0 ? true : false;
+			const char* sdcard_dev_node = find_dev_node1 ? kDevNode1 : kDevNode2;
+			char str_cmd[64] = {0};
+			sprintf(str_cmd, "fsck.fat -V -a -w %s", sdcard_dev_node);
+			system(str_cmd);
+			XM_Middleware_WDT_WatchDogStart(6);
+		}
+#endif
+		XMLogW("after fsck sdcard");
+		get_cfg_value.bool_value = false;
+		GlobalData::Instance()->car_config()->SetValue(CFG_Operation_NEED_REPAIR_SDCARD, get_cfg_value);
+	}
+#endif
+
 	cfg_value.int_value = English;
 	GlobalData::Instance()->car_config()->GetValue(CFG_Operation_Language, cfg_value);
 	GlobalPage::Instance()->page_main()->language_value_ = cfg_value.int_value;
@@ -237,6 +274,7 @@ void PageMain::CreatePage()
 	
     	kAudioPathLan = "/mnt/custom/Audio/english/";
 	}
+	//Voice_prompts("Please fasten your seat belt.pcm");
 	//录像界面水印
 	// x2_logo_img_ = lv_img_create(main_page_);
 	// lv_img_set_src(x2_logo_img_, image_path"Safe_cam.png");
@@ -391,25 +429,27 @@ int PageMain::WifiEnable(bool enable)
 		GlobalData::Instance()->app_page_ = APP_PAGE_PREVIEW;
 		lv_img_set_src(wifi_img_, image_path"0wifi.png");
 
-		
-		// if (wifi_id_label_ == NULL && wifi_password_label_==NULL) {
-		// 	WIFI_MAC_PARAM_S wifi_param;
-		// 	memset(wifi_param.ssid, 0, sizeof(wifi_param.ssid));
-		// 	memset(wifi_param.ssid, 0, sizeof(wifi_param.password));
-		// 	memset(wifi_param.mac, 0, sizeof(wifi_param.mac));
-		// 	XM_Middleware_WIFI_GetMacParam(&wifi_param);
+#if X2V50_2_PRODUCT_TEST//生产测试录像页面显示wifi名称和密码
+		 if (wifi_id_label_ == NULL && wifi_password_label_==NULL) {
+		 	WIFI_MAC_PARAM_S wifi_param;
+		 	memset(wifi_param.ssid, 0, sizeof(wifi_param.ssid));
+		 	memset(wifi_param.ssid, 0, sizeof(wifi_param.password));
+		 	memset(wifi_param.mac, 0, sizeof(wifi_param.mac));
+		 	XM_Middleware_WIFI_GetMacParam(&wifi_param);
 			
-		// 	wifi_id_label_ = lv_label_create(main_page_);
-		// 	lv_label_set_text_fmt(wifi_id_label_, "Wifi ssid: ""%s",wifi_param.ssid);
-		// 	 if(!touch_plan){
-		// 	  lv_obj_align(wifi_id_label_, LV_ALIGN_BOTTOM_LEFT, size_w(10), -size_h(40));
-		// 	 }else{
-        //       lv_obj_align(wifi_id_label_, LV_ALIGN_BOTTOM_LEFT, size_w(10), -size_h(80));
-		// 	 }
-		// 	wifi_password_label_ = lv_label_create(main_page_);
-		// 	lv_label_set_text_fmt(wifi_password_label_, "Wifi password: ""%s",wifi_param.password);
-		// 	lv_obj_align_to(wifi_password_label_,wifi_id_label_, LV_ALIGN_BOTTOM_LEFT, size_w(0), size_h(25));
-		// }
+		 	wifi_id_label_ = lv_label_create(main_page_);
+		 	lv_label_set_text_fmt(wifi_id_label_, "Wifi ssid: ""%s",wifi_param.ssid);
+		 	 if(!touch_plan){
+		 	  lv_obj_align(wifi_id_label_, LV_ALIGN_BOTTOM_LEFT, size_w(50), -size_h(60));
+		 	 }else{
+               lv_obj_align(wifi_id_label_, LV_ALIGN_BOTTOM_LEFT, size_w(50), -size_h(45));
+		 	 }
+		 	wifi_password_label_ = lv_label_create(main_page_);
+		 	lv_label_set_text_fmt(wifi_password_label_, "Wifi password: ""%s",wifi_param.password);
+		 	lv_obj_align_to(wifi_password_label_,wifi_id_label_, LV_ALIGN_BOTTOM_LEFT, size_w(0), size_h(25));
+		 }
+#endif
+		
 		XM_Middleware_WIFI_WifiEnable(true);
 		MppMdl::Instance()->SubStreamEnable(false);
 		//开启server
@@ -693,18 +733,19 @@ void PageMain::UpdateTime(lv_timer_t* timer)
 						strncat(id, &pstNetAttr.mac[12], 2);
 						strncat(id, &pstNetAttr.mac[15], 2);
 						//默认wifi名为X2C3加mac地址后4位，密码是1234567890
-						std::string wifi_name = " X2V50_";//"X27W_";
+						std::string wifi_name = "HisDvr-";//"X27W_"; X2V50_ HisDvr- 
 						wifi_name += id;
 						strcpy(wifi_param.name, wifi_name.c_str());
 						strcpy(wifi_param.password, "12345678");
 						XM_Middleware_WIFI_CreateWifiParamFile(&wifi_param);
 
-						 XM_CONFIG_VALUE cfg_value;
+    					 XM_CONFIG_VALUE cfg_value;
                          cfg_value.int_value = 0;
                          GlobalData::Instance()->car_config()->GetValue(CFG_Operation_WiFi, cfg_value);
-						 if(cfg_value.int_value ==1){
-                          object->WifiEnable (true);
-						 }
+    					 if(cfg_value.int_value ==1){
+						 	
+                            object->WifiEnable (true);
+    					 }
 					}
 				}
 				
@@ -1162,6 +1203,11 @@ void PageMain::CfgInit()
 		lv_timer_pause(shutdown_timer_);
 	}
 
+	//疲劳驾驶提醒
+	cfg_value.int_value = 0;
+    GlobalData::Instance()->car_config()->GetValue(CFG_Operation_Fatigue_reminder, cfg_value);
+    GlobalPage::Instance()->page_main()->Fatigue_reminder_value=cfg_value.int_value; 
+	
 	//后拉镜像
 	// cfg_value.bool_value = false;
 	// GlobalData::Instance()->car_config()->GetValue(CFG_Operation_Behind_Mirror, cfg_value);
@@ -2004,7 +2050,7 @@ void PageMain::ExitCompactRecord()
 	}
 	//关闭缩时录影
 	CloseRecord(true);
-	
+	Fatigue_reminder_cnt = 0;
 	//息屏恢复正常
 	if (rest_screen_timer_) {
 		cfg_value.int_value = 0;

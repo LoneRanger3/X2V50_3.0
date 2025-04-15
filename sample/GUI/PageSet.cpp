@@ -305,6 +305,10 @@ void PageSet::OpenSubpage_Function(lv_event_t* e)
           break;
      case Subpage_KeyTone:
          page_sys_set->ChangeKeyToneEvent(e);
+          break;
+     case Subpage_Watermark:
+	     page_video_set->ChangeDateWatermarkEvent(e);
+          break;
      case Subpage_Fatigue_reminder:
 	     page_sys_set->ChangeFatigueReminder(e);
           break;

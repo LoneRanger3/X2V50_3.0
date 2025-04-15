@@ -122,7 +122,7 @@ int SetEncodeParam(int channel, PAYLOAD_TYPE_E video_codec_type, int width, int 
 	media_info.width = width;
 	media_info.height = height;
 	media_info.bit_rate = bit_rate;
-	media_info.frame_rate = frame_rate;		
+	media_info.frame_rate = frame_rate;
 	media_info.audio_codec = PT_PCMA;
 	media_info.audio_channel = 1;
 	media_info.bit_per_sample = 16;
@@ -282,7 +282,7 @@ void OnMWEventCallBack(long handle, XMEventType event_type, const char* msg, int
 	}
 
 	//app来获取设备属性，可以异步处理，直接返回，等设备切换到预览模式再回复
-	if (XM_EVENT_APP_GET_DEVATTR == event_type) { 
+	if (XM_EVENT_APP_GET_DEVATTR == event_type) {
 		ProcessGetDevAttr();
 		return;
 	}
@@ -498,6 +498,16 @@ int ProcessEvent(long handle, XMEventType event_type, const std::string& msg, in
 				GlobalPage::Instance()->page_main()->ShutDown(ShutDownMode_Acc, true, true);
 				break;
 			}
+
+#if 1//
+			//卡修复
+			XM_CONFIG_VALUE get_cfg_value;
+			GlobalData::Instance()->car_config()->GetValue(CFG_Operation_NEED_REPAIR_SDCARD, get_cfg_value);
+			
+			get_cfg_value.bool_value = true;
+			GlobalData::Instance()->car_config()->SetValue(CFG_Operation_NEED_REPAIR_SDCARD, get_cfg_value);
+#endif
+
 
 			GlobalPage::Instance()->page_main()->CloseRecord();
 			GlobalPage::Instance()->page_main()->OpenTipBox("Please insert SD card");
@@ -1698,11 +1708,11 @@ int main(int argc, char *argv[ ])
 		//version += "00-" ;//VSP，定义00为通用
 		version += XM_Middleware_GetVersion(); //sdk版本号
 		char date_version[32] = {0};
-		#if 0
+		#if 1
 		sprintf(date_version, "-%04d%02d%02d-%02d:%02d:%02d", 
 			OS_YEAR, OS_MONTH, OS_DAY, OS_HOUR, OS_MINUTE, OS_SECOND);
 		#else
-		 sprintf(date_version, "-20250218");
+		 sprintf(date_version, "-20250214");
 		#endif	
 		version += date_version;
 		GlobalData::Instance()->set_version(version);

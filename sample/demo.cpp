@@ -1094,13 +1094,39 @@ int ProcessEvent(long handle, XMEventType event_type, const std::string& msg, in
 		{
 			XMLogI("XM_EVENT_OSD_ENABLE, param = %d", param);
 			XM_CONFIG_VALUE cfg_value;
+			int ret = 0;
 			cfg_value.bool_value = param == 1 ? true : false;
 			// XM_Middleware_Encode_EnableOsdTime(cfg_value.bool_value, osd_x, osd_y);
-			int ret = GlobalData::Instance()->car_config()->SetValue(CFG_Operation_Date_Watermark, cfg_value);
+			ret = GlobalData::Instance()->car_config()->SetValue(CFG_Operation_Date_Watermark, cfg_value);
+
+            #if 1//OSD_SHOW_ADJUST
+			if(!cfg_value.bool_value){
+				
+				cfg_value.bool_value = 0;
+				GlobalData::Instance()->car_config()->SetValue(CFG_Operation_GPS_Watermark, cfg_value);
+			}
+            #endif
+			
 			if (ret < 0) {
 				XMLogE("set config error, opr=CFG_Operation_Date_Watermark");
 			}
 			osd_data_init();
+
+            #if OSD_SHOW_ADJUST
+			if(!param){//关闭时间水印
+			
+				clean_gps_osd_data(0);
+			}else{
+			
+			    GlobalData::Instance()->car_config()->GetValue(CFG_Operation_GPS_Watermark, cfg_value);
+				if(!cfg_value.bool_value){
+					//
+    				osd_time_ofs_y = OSD_GPS_ADJUST_Y;
+    				clean_gps_osd_data(0);
+    				MppMdl::Instance()->EnableOsdTime(4,1, 128, 8192*(kSubStreamHeight-60-(kSubStreamHeight/360)*8)/kSubStreamHeight + osd_time_ofs_y);
+				}
+			}
+            #endif
 		}
 		break;
 	case XM_EVENT_CHANGE_WIFI_PARAM:
@@ -1474,6 +1500,17 @@ int OnUIEventCallback(XMUIEventType ui_event_type, XMUIEventInParam* in_param, X
 // Retrieve second info
 #define OS_SECOND   ((__TIME__ [6] - '0') * 10 + (__TIME__ [7] - '0'))
 
+void get_current_time(char* str)
+{
+	static char date_buf[22] = {0};//19
+	
+	memset(date_buf, 0, 22);
+	sprintf(date_buf, "  %04d.%02d.%02d %02d:%02d:%02d", 
+		OS_YEAR, OS_MONTH, OS_DAY, OS_HOUR, OS_MINUTE, OS_SECOND);
+
+	memcpy(str, date_buf, 22);
+}
+
 bool sdcard_checked = false;
 bool record_start_dealt = false;
 
@@ -1739,6 +1776,7 @@ int main(int argc, char *argv[ ])
         if(ret>=0 && cfg_value.bool_value){
 		std::string sound_file = kAudioPath;
 		sound_file += "kaiji_16k.pcm";
+		GlobalPage::Instance()->page_main()->playsound_flag_ = cfg_value.bool_value;
 		MppMdl::Instance()->PlaySound(sound_file.c_str());
 		}
 		cfg_value.bool_value = false;
@@ -1884,6 +1922,11 @@ int main(int argc, char *argv[ ])
 			return XM_SUCCESS;
 		}
 		else {
+
+    		cfg_value.int_value = English;
+    		GlobalData::Instance()->car_config()->GetValue(CFG_Operation_Language, cfg_value);
+    		GlobalPage::Instance()->page_main()->language_value_ = cfg_value.int_value;
+		
 			osd_data_init();
 			//Adjust_Screen_Effect();
 			//设置UI界面操作事件回调函数，ui界面中开始存储、停止存储、查询查询、点播等操作，可以通过GlobalData::Instance()->ui_event_cb_回调出来

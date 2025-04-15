@@ -1,4 +1,4 @@
-#include <string>
+﻿#include <string>
 #include "osd_user.h"
 #include "xm_middleware_api.h"
 #include "xm_middleware_network.h"
@@ -247,11 +247,11 @@ int osd_data_init(void)
 	if (ret >= 0) {
        if(cfg_value.int_value==1080){
           width_v=1920;
-		  height_v=1080;
+		  height_v= 1080 + 380;
 		  move=20;
 	   }else if(cfg_value.int_value==1440){
           width_v=2560;
-		  height_v=1440 - 460;//-128 -上移
+		  height_v=1440 - 460 + 880;//-128 -上移
 		  move=18;
 	   }else if(cfg_value.int_value==k3KHeight || cfg_value.int_value==k4KHeight){
         //   if(!MppMdl::Instance()->AdLoss()){
@@ -265,7 +265,7 @@ int osd_data_init(void)
 			 move=16;
 			}else{
 			 width_v=3840;
-		     height_v=k4KHeight-1024;//-256-128 +下移
+		     height_v=k4KHeight - 1024 + 300;//-256-128 +下移
 			 move=16;
 			}
 		//   }
@@ -278,7 +278,7 @@ int osd_data_init(void)
 
 	  osd_x=128;  
 	  osd_y=8192*(height_v-60-(height_v/360)*8)/height_v;
-      osd_y1=8192*(R_Heigth-60-(R_Heigth/360)*8)/R_Heigth;
+      osd_y1=8192*(R_Heigth-60-(R_Heigth/360)*8)/R_Heigth + 200;
 	  osd_y4=8192*(720-36-(720/360)*8)/720;
 
 	cfg_value.bool_value = true;

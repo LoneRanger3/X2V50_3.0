@@ -148,7 +148,7 @@ void PageSet::CreatePage()
 
     SetMenuStyle(sys_set_list_, screen_width, size_h(PAGE_MENU_LIST_H));
 	#if 1
-	Createfunction_bar(set_page_,58,7,true,false);
+	Createfunction_bar(set_page_,58,11,true,false);
 	#endif
 }
 

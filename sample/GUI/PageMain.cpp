@@ -1860,7 +1860,7 @@ void PageMain::PWREvent()
 void PageMain::SetListStyle(lv_obj_t* list, lv_coord_t width, lv_coord_t height)
 {
 #if 1
-    lv_obj_set_size(list, width+30, height-45);
+    lv_obj_set_size(list, width+30, height-50);
 #else
     lv_obj_set_size(list, width+30, height);
 #endif

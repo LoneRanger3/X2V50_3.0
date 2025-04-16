@@ -1,4 +1,4 @@
-/******************************************************************************
+﻿/******************************************************************************
   Copyright (C), 2020, xmsilicon Tech. Co., Ltd.
  ******************************************************************************
   File Name     : demo.c
@@ -913,6 +913,10 @@ int ProcessEvent(long handle, XMEventType event_type, const std::string& msg, in
 		{
 			XMLogI("XM_EVENT_SDCARD_FORMAT");
 			GlobalData::Instance()->SDCard_write_speed_ = param;
+			if (GlobalPage::Instance()->page_sys_set()->format_tip_win_) {				
+				lv_obj_del(GlobalPage::Instance()->page_sys_set()->format_tip_win_);				
+			    GlobalPage::Instance()->page_sys_set()->format_tip_win_ = NULL;		
+			}
 		}
 		break;
 	case XM_EVENT_CAMERA_SWITCH:

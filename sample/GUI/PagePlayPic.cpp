@@ -125,7 +125,7 @@ void PagePlayPic::OpenSetPage()
     lv_label_set_text(title_label_, GetParsedString("Set"));
     lv_obj_align(title_label_, LV_ALIGN_CENTER, 0, size_h(3));
 
-    lv_obj_t* menu_list_ = lv_create_page(set_page_, screen_width, size_h(298),
+    lv_obj_t* menu_list_ = lv_create_page(set_page_, screen_width, size_h(PAGE_MENU_LIST_H),
         lv_color_make(16, 16, 16), 0, 0, lv_font_all, lv_color_white(), 0);
     lv_obj_align(menu_list_, LV_ALIGN_TOP_MID, size_w(0), size_h(62));
     lv_obj_add_flag(menu_list_, LV_OBJ_FLAG_SCROLLABLE);
@@ -151,11 +151,11 @@ void PagePlayPic::OpenSetPage()
         lv_obj_t* label = lv_create_label(set_btn_[i], size_w(screen_width), text[i].c_str(), LV_ALIGN_TOP_LEFT, 0);
         lv_obj_align(label, LV_ALIGN_TOP_LEFT, size_w(20), size_h(3));
 	}
-    GlobalPage::Instance()->page_playback()->SelectFileStyle(menu_list_, screen_width, size_h(298));
+    GlobalPage::Instance()->page_playback()->SelectFileStyle(menu_list_, screen_width, size_h(PAGE_MENU_LIST_H));
 	lv_group_focus_next(GlobalData::Instance()->group);
 
-#if 0
-	GlobalPage::Instance()->page_set()->Createfunction_bar(set_page_,35,7,true,false);
+#if 1
+	GlobalPage::Instance()->page_set()->Createfunction_bar(set_page_,58,7,true,false);
 #endif
 }
 void PagePlayPic::DelSetPageEvent(lv_event_t* e)

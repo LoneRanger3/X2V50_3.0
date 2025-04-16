@@ -260,7 +260,7 @@ void PagePlayback::OpenSetPage()
 	lv_group_focus_next(GlobalData::Instance()->group);
 
 #if 1
-	GlobalPage::Instance()->page_set()->Createfunction_bar(video_set_page_,58,7,true,false);
+	GlobalPage::Instance()->page_set()->Createfunction_bar(video_set_page_,58,11,true,false);
 #endif
 }
 
@@ -992,7 +992,7 @@ void PagePlayback::OpenSelectFilePage()
     SelectFileStyle(filetype_list_, screen_width, size_h(PAGE_MENU_LIST_H));
 
 #if 1
-    GlobalPage::Instance()->page_set()->Createfunction_bar(select_filetype_page_,58,7,true,false);
+    GlobalPage::Instance()->page_set()->Createfunction_bar(select_filetype_page_,58,11,true,false);
 #endif
 }
 

@@ -155,7 +155,7 @@ void PagePlayPic::OpenSetPage()
 	lv_group_focus_next(GlobalData::Instance()->group);
 
 #if 1
-	GlobalPage::Instance()->page_set()->Createfunction_bar(set_page_,58,7,true,false);
+	GlobalPage::Instance()->page_set()->Createfunction_bar(set_page_,58,11,true,false);
 #endif
 }
 void PagePlayPic::DelSetPageEvent(lv_event_t* e)

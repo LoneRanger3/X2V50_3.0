@@ -151,15 +151,28 @@ void PageMain::CreatePage()
 	lv_obj_add_event_cb(silent_record_img_, BtnEvent, LV_EVENT_ALL, (void*)RecordPageBtnFlag_RecordSound);
 	lv_obj_set_ext_click_area(silent_record_img_, 20);
 
-	g_sensor_img_ = lv_img_create(main_page_);
-	lv_img_set_src(g_sensor_img_, image_path"G-sensor.png");
-	lv_obj_align_to(g_sensor_img_,mic_record_img_, LV_ALIGN_OUT_LEFT_MID,size_w(0), size_h(0));
-	UpdateGsensorImg();
+    wifi_img_ = lv_img_create(main_page_);
+    if (cfg_value.int_value == 1) {
+        lv_img_set_src(wifi_img_, image_path"0wifi.png");
+    }
+    else {
+        lv_img_set_src(wifi_img_, image_path"no_wifi.png");
+    }
+    lv_obj_align_to(wifi_img_, mic_record_img_, LV_ALIGN_OUT_LEFT_MID, -size_w(3), -size_h(1));
+    lv_obj_add_flag(wifi_img_, LV_OBJ_FLAG_CLICKABLE);
+    lv_obj_add_event_cb(wifi_img_, BtnEvent, LV_EVENT_ALL, (void*)RecordPageBtnFlag_Wifi);
+    lv_obj_set_ext_click_area(wifi_img_, 20);
 
-	collision_startup_img_ = lv_img_create(main_page_);
-	lv_img_set_src(collision_startup_img_, image_path"i_park.png");
-	lv_obj_align_to(collision_startup_img_, g_sensor_img_, LV_ALIGN_OUT_LEFT_MID, size_w(0), size_h(0));
-	UpdateCollisionStartupImg();
+
+    g_sensor_img_ = lv_img_create(main_page_);
+    lv_img_set_src(g_sensor_img_, image_path"G-sensor.png");
+    lv_obj_align_to(g_sensor_img_, wifi_img_, LV_ALIGN_OUT_LEFT_MID, -size_w(0), size_h(0));
+    UpdateGsensorImg();
+
+    collision_startup_img_ = lv_img_create(main_page_);
+    lv_img_set_src(collision_startup_img_, image_path"i_park.png");
+    lv_obj_align_to(collision_startup_img_, g_sensor_img_, LV_ALIGN_OUT_LEFT_MID, size_w(5), size_h(0));
+    UpdateCollisionStartupImg();
 
 	photo_img_ = lv_img_create(main_page_);
 	lv_img_set_src(photo_img_, image_path"photo_on.png");
@@ -212,22 +225,6 @@ void PageMain::CreatePage()
 
      cfg_value.int_value = 0;
 	 
-	// GlobalData::Instance()->car_config()->SetValue(CFG_Operation_WiFi, cfg_value);
-     GlobalData::Instance()->car_config()->GetValue(CFG_Operation_WiFi, cfg_value);
-	 wifi_img_ = lv_img_create(main_page_);
-     if (cfg_value.int_value==1) {
-            lv_img_set_src(wifi_img_, image_path"0wifi.png");
-     }
-     else {
-         lv_img_set_src(wifi_img_, image_path"no_wifi.png");
-     }
-
-	lv_obj_align(wifi_img_, LV_ALIGN_BOTTOM_RIGHT, -size_w(10), -size_h(3));
-	lv_obj_add_flag(wifi_img_, LV_OBJ_FLAG_CLICKABLE);
-	lv_obj_add_event_cb(wifi_img_, BtnEvent, LV_EVENT_ALL, (void*)RecordPageBtnFlag_Wifi);
-	lv_obj_set_ext_click_area(wifi_img_, 20);
-	//lv_obj_add_flag(wifi_img_, LV_OBJ_FLAG_HIDDEN);
-	
 #if 1//
 	//卡修复
 	int tep = 0;

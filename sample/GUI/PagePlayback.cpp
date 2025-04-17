@@ -357,6 +357,7 @@ void PagePlayback::DeletedEvent(lv_event_t* e)
 	lv_group_focus_obj(GlobalPage::Instance()->page_playback()->foucused_obj_[0]);
 }
 
+#if 1
 void PagePlayback::OpenConfirmPage(int flag)
 {
 	lv_obj_t* page = lv_create_page(lv_scr_act(), screen_width, screen_height, lv_color_black(), 0, 0,
@@ -365,7 +366,7 @@ void PagePlayback::OpenConfirmPage(int flag)
 	lv_obj_set_pos(page, 0, start_y);
 	lv_obj_add_event_cb(page, DeletedEvent, LV_EVENT_DELETE, NULL);
 
-	lv_obj_t* tip_win = lv_create_page(page, screen_width, PAGE_MENU_LIST_H, lv_palette_darken(LV_PALETTE_GREY, 2), 5, 2,
+	lv_obj_t* tip_win = lv_create_page(page, screen_width, 298, lv_palette_darken(LV_PALETTE_GREY, 2), 5, 2,
 		lv_font_all, lv_color_white(), 0);
 	lv_obj_align(tip_win, LV_ALIGN_CENTER, 0, size_h(30));
 
@@ -397,6 +398,48 @@ void PagePlayback::OpenConfirmPage(int flag)
 
 	GlobalData::Instance()->opened_subpage_[0] = page;
 }
+#else
+void PagePlayback::OpenConfirmPage(int flag)
+{
+	lv_obj_t* page = lv_create_page(lv_scr_act(), screen_width, screen_height, lv_color_black(), 0, 0,
+		lv_font_all, lv_color_white(), 0);
+	lv_obj_set_style_bg_opa(page, 0, 0);
+	lv_obj_set_pos(page, 0, start_y);
+	lv_obj_add_event_cb(page, DeletedEvent, LV_EVENT_DELETE, NULL);
+
+	lv_obj_t* tip_win = lv_create_page(page, screen_width, PAGE_MENU_LIST_H -30, lv_palette_darken(LV_PALETTE_GREY, 2), 5, 2,
+		lv_font_all, lv_color_white(), 0);
+	lv_obj_align(tip_win, LV_ALIGN_CENTER, 0, size_h(31));
+
+	std::string text[PlaybackSubpage_Total] = { GetParsedString("Delete current"), GetParsedString("Delete all"),
+    GetParsedString("Lock current"), GetParsedString("Unlock current"),
+    GetParsedString("Lock all"), GetParsedString("Unlock all") };
+	lv_obj_t* label = lv_create_label(tip_win, screen_width-100, text[flag].c_str(), LV_TEXT_ALIGN_CENTER, 0);
+	lv_obj_align(label, LV_ALIGN_TOP_MID, 0, size_h(22));
+
+	lv_obj_t* yes_btn = lv_create_btn(tip_win, size_w(240), size_h(52),
+        lv_color_make(85, 85, 85), 10, ManageFileEvent, LV_EVENT_ALL, (void*)flag, 0);
+	/*lv_obj_set_style_border_width(yes_btn, 2, 0);
+	lv_obj_set_style_border_color(yes_btn, lv_palette_lighten(LV_PALETTE_BLUE_GREY, 2), 0);*/
+	lv_obj_align(yes_btn, LV_ALIGN_TOP_MID, size_w(0), size_h(62));
+
+	lv_obj_t* btn_label = lv_label_create(yes_btn);
+	lv_label_set_text(btn_label, GetParsedString("Confirm"));
+	lv_obj_center(btn_label);
+
+	lv_obj_t* no_btn = lv_create_btn(tip_win, size_w(240), size_h(52),
+		lv_color_make(85, 85,85), 10, ManageFileEvent, LV_EVENT_ALL, (void*)-1, 0);
+	/*lv_obj_set_style_border_width(no_btn, 2, 0);
+	lv_obj_set_style_border_color(no_btn, lv_palette_lighten(LV_PALETTE_BLUE_GREY, 2), 0);*/
+	lv_obj_align(no_btn, LV_ALIGN_TOP_MID, size_w(0), size_h(138));
+
+	btn_label = lv_label_create(no_btn);
+	lv_label_set_text(btn_label, GetParsedString("Cancel"));
+	lv_obj_center(btn_label);
+
+	GlobalData::Instance()->opened_subpage_[0] = page;
+}
+#endif
 
 void PagePlayback::ManageFileEvent(lv_event_t* e)
 {

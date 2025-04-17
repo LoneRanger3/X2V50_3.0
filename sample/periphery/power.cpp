@@ -114,7 +114,7 @@ int LowBatteryClose() {
 		// readl(USB_DET, &usb_connect_det_battery);
 		if (usb_connect_det_battery == LOW_POWER) {
 			current_battery_num = get_adc_val(ADC1_BATTERY);
-			//XMLogI("low battery:%d", current_battery_num); //打印电池电量
+			XMLogI("low battery:%d", current_battery_num); //打印电池电量
 			if (current_battery_num && current_battery_num <= SHUT_DOWN_THRESHOLD) {
 				low_battery_times++;
 				if (current_battery_num <= 157) {

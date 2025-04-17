@@ -86,6 +86,8 @@ void set_language(int language)
 		path = language_path"Traditional";
 	else if(language == Polish)
 		path = language_path"Polish";
+	else if(language == Arabic)
+		path = language_path"Arabic";
 
     lv_font_all = (lv_font_t*)lv_font_size[language];
     

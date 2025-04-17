@@ -569,6 +569,10 @@ void PageSysSet::ChangeLanguage(lv_event_t* e)
 		for(int i=0;i<2;i++){
 			lv_group_focus_next(GlobalData::Instance()->group);
 		}
+
+		#if AIPAIPAI_PROJECT_ARABIC
+		osd_data_init();
+		#endif
 	}
 }
 void PageSysSet::ChangeScreenList(lv_event_t* e)

@@ -15,6 +15,7 @@ extern lv_font_t lv_font_Japanese_20;
 extern lv_font_t lv_font_europe_20;
 extern lv_font_t lv_font_russian_18;
 extern lv_font_t lv_font_thai_18;
+extern lv_font_t lv_font_Arabic_18;
 
  lv_font_t* lv_font_size[] = {
   &lv_font_simpchinese_22,
@@ -28,7 +29,8 @@ extern lv_font_t lv_font_thai_18;
   & lv_font_europe_20,
   & lv_font_europe_20,
   & lv_font_europe_20,
-  & lv_font_europe_20
+  & lv_font_europe_20,
+  &lv_font_Arabic_18
 };
 lv_font_t* lv_font_all= NULL;
 extern "C"

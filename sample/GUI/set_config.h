@@ -22,7 +22,6 @@
 #define X2V50_2_PRODUCT_TEST    0    //生产测试(1.录像页面显示wifi名称密码。2.gsensor灵敏度打开。3.WiFi默认打开。4.gps模拟关闭)
 #define SD_CARD_PLAY_INTERVAL_TIME 30  //SD卡播报间隔
 #define AIPAIPAI_PROJECT_ARABIC 0  //爱拍拍阿拉伯地区定制
-#define AIPAIPAI_PROJECT_ARABIC 0  //爱拍拍阿拉伯地区定制
 #define PAGE_MENU_LIST_H 238
 
 #if AIPAIPAI_PROJECT_ARABIC
@@ -74,6 +73,7 @@ enum Language
     Spanish,      //西班牙
     Portuguese,       //葡萄牙
     Polish,       //波兰语
+    Arabic,      //阿拉伯语
 };
 
 enum Sensitivity
@@ -161,7 +161,11 @@ const XM_CONFIG_UNIT CFG_ALL_OPERATION_UNITS[] =
 	//系统设置初始化
 	{ CFG_Operation_Lcd_OffTime,			"",		"lcd_offtime",			CFG_Operation_Value_Int,	0},//0
 	{ CFG_Operation_Lcd_Light,			    "",		"lcd_light",			CFG_Operation_Value_Int,	60},
-	{ CFG_Operation_Language,				"",		"language",				CFG_Operation_Value_Int,	English},//  English  SimpChinese TradChinese
+	#if AIPAIPAI_PROJECT_ARABIC
+	{ CFG_Operation_Language,				"",		"language",				CFG_Operation_Value_Int,	Arabic},//  Arabic
+	#else
+	{ CFG_Operation_Language,				"",		"language",				CFG_Operation_Value_Int,	English},//  English
+	#endif
 	{ CFG_Operation_Key_Voice,				"",		"key_voice",			CFG_Operation_Value_Bool,	true},
 	{ CFG_Operation_boot_Voice,				"",		"boot_voice",			CFG_Operation_Value_Int,	Volume_Mid},//Volume_High
 	{ CFG_Operation_Acc_Power_Supply,		"",		"acc_power_supply",		CFG_Operation_Value_Bool,	true},
@@ -449,9 +453,9 @@ const struct menu_table sys_menu_config_table[] = {
        Subpage_LanguageSet,                       //菜单列表名
        {image"language.png",image"language-.png"},            //一级菜单图片路径
        "Language",     //一级菜单列表文案
-       {"SimpChinese","TradChinese","Japanese",	"English",/*"Thai",*/"Russian","German","French","Italian","Spanish","Polish"},//二级菜单列表显示的文案
-       {SimpChinese,TradChinese, Japanese, English,/*Thai,*/Russian, German, French, Italian, Spanish, Polish},    //此菜单实际生效的值，默认选项值必定为其中之一
-        10,       //二级菜单个数
+       {"SimpChinese","TradChinese","Japanese",	"English","Russian","German","French","Italian","Spanish","Polish","Arabic"},//二级菜单列表显示的文案 /*"Thai",*/
+       {SimpChinese,TradChinese, Japanese, English,/*Thai,*/Russian, German, French, Italian, Spanish, Polish,Arabic},    //此菜单实际生效的值，默认选项值必定为其中之一
+        11,       //二级菜单个数
        CFG_Operation_Language,
     },
 #if G_SENSOR_EN

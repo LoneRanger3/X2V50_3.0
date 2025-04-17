@@ -1247,7 +1247,18 @@ int MppMdl::EnableOsdTime(int channel, bool enable, int x, int y)
 		   CloseOSD(channel, channel);			
 		   enable_osd_[channel] = false;		
 		  }
-		osd_time_x_[channel] = x;
+		 #if AIPAIPAI_PROJECT_ARABIC
+		 if(GlobalPage::Instance()->page_main()->language_value_ == Arabic && (channel == 4 || channel == 1)){
+			 
+			 osd_time_x_[channel] = x + OSD_TIME_OFS_X;  //阿拉伯语水印右移
+		 }else{
+		 
+			 osd_time_x_[channel] = x;
+		 }
+		 #else
+		 	 osd_time_x_[channel] = x;
+		 #endif
+		 
 		osd_time_y_[channel] = y;
 		OsdTitleCreate(channel, channel, kOSDWidth*20, kOSDHeight);
 	}

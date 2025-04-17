@@ -34,6 +34,7 @@ CSRCS += lv_font_europe_20.c
 CSRCS += lv_font_Japanese_20.c
 CSRCS += lv_font_russian_18.c
 CSRCS += lv_font_thai_18.c
+CSRCS += lv_font_Arabic_18.c
 
 DEPPATH += --dep-path $(LVGL_DIR)/$(LVGL_DIR_NAME)/src/font
 VPATH += :$(LVGL_DIR)/$(LVGL_DIR_NAME)/src/font
